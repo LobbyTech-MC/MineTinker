@@ -124,7 +124,7 @@ public class GUIs {
 							.replace("%block", ChatColor.ITALIC
 									+ ChatWriter.toCamel(MineTinker.getPlugin().getConfig().getString("BlockToEnchantModifiers", ""))
 									+ ChatColor.RESET + ChatColor.WHITE)
-							.replace("%mat", ChatWriter.toCamel(LangUtils.getItemDisplayName(m.getModItem()))).replace("%key",
+							.replace("%mat", ChatWriter.toCamel(LangUtils.getI18NDisplayName(m.getModItem()))).replace("%key",
 									LanguageManager.getString("GUIs.RightClick")), 30));
 				}
 
