@@ -9,7 +9,7 @@ website: @project.url@
 database: false
 api-version: "1.14"
 
-softdepend: [ProtocolLib]
+softdepend: [ProtocolLib, ChanLang]
 
 ####################################################
 commands:

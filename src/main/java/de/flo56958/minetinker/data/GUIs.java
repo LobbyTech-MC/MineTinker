@@ -25,6 +25,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import cn.whiteg.chanlang.LangUtils;
 
 import java.util.*;
 
@@ -123,7 +124,7 @@ public class GUIs {
 							.replace("%block", ChatColor.ITALIC
 									+ ChatWriter.toCamel(MineTinker.getPlugin().getConfig().getString("BlockToEnchantModifiers", ""))
 									+ ChatColor.RESET + ChatColor.WHITE)
-							.replace("%mat", ChatWriter.toCamel(m.getModItem().getType().name())).replace("%key",
+							.replace("%mat", ChatWriter.toCamel(LangUtils.getItemDisplayName(m.getModItem()))).replace("%key",
 									LanguageManager.getString("GUIs.RightClick")), 30));
 				}
 
