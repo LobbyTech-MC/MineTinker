@@ -140,9 +140,7 @@ public class Photosynthesis extends Modifier implements Listener {
 						item.setItemMeta(meta);
 
 						// Track statistic
-						int stat = (DataHandler.hasTag(item, getKey() + "_stat_healed", PersistentDataType.INTEGER))
-								? DataHandler.getTag(item, getKey() + "_stat_healed", PersistentDataType.INTEGER)
-								: 0;
+						int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_healed", PersistentDataType.INTEGER, 0);
 						stat += oldDamage - newDamage;
 						DataHandler.setTag(item, getKey() + "_stat_healed", stat,PersistentDataType.INTEGER);
 					}
@@ -156,10 +154,8 @@ public class Photosynthesis extends Modifier implements Listener {
 
 	@Override
 	public List<String> getStatistics(ItemStack item) {
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_healed", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_healed", PersistentDataType.INTEGER)
-				: 0;
-		List<String> lore = new ArrayList<>();
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_healed", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Photosynthesis.Statistic_Healed")
 				.replaceAll("%amount", String.valueOf(stat)));
 		return lore;
@@ -200,6 +196,7 @@ public class Photosynthesis extends Modifier implements Listener {
 		config.addDefault("Color", "%GREEN%");
 		config.addDefault("MaxLevel", 5);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.VINE.name());
 		config.addDefault("HealthRepairPerLevel", 1); //per Tick
 		config.addDefault("MultiplierPerTick", 1.05);
 		config.addDefault("TickTime", 100); //TickTime in Minecraft ticks
@@ -226,7 +223,7 @@ public class Photosynthesis extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.VINE);
+		init();
 
 		this.healthRepair = config.getInt("HealthRepairPerLevel", 2);
 		this.tickTime = config.getInt("TickTime", 100);
@@ -250,7 +247,7 @@ public class Photosynthesis extends Modifier implements Listener {
 
 			for (final Player player : Bukkit.getOnlinePlayers())
 				data.putIfAbsent(player.getUniqueId(), new Tupel(player.getLocation(), System.currentTimeMillis(), false));
-			this.taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(MineTinker.getPlugin(), this.runnable, 5 * 20L, this.tickTime);
+			this.taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(this.getSource(), this.runnable, 5 * 20L, this.tickTime);
 		} else
 			this.taskID = -1;
 	}

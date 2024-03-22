@@ -72,6 +72,7 @@ public class AutoSmelt extends Modifier implements Listener {
 		config.addDefault("Color", "%YELLOW%");
 		config.addDefault("MaxLevel", 1);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.FURNACE.name());
 		config.addDefault("PercentagePerLevel", 100);
 		config.addDefault("Sound", true); //Auto-Smelt makes a sound
 		config.addDefault("Particles", true); //Auto-Smelt will create a particle effect when triggered
@@ -224,7 +225,7 @@ public class AutoSmelt extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.FURNACE);
+		init();
 
 		this.percentagePerLevel = config.getInt("PercentagePerLevel", 100);
 		this.hasSound = config.getBoolean("Sound", true);
@@ -281,15 +282,13 @@ public class AutoSmelt extends Modifier implements Listener {
 		if (conv.luckable) {
 			int level = modManager.getModLevel(tool, Luck.instance());
 
-			int extra = 0;
-			if (level > 0) extra = new Random().nextInt(level + 1) * amount;
-			amount += amount + extra;
+			if (level > 0) {
+				int extra = new Random().nextInt(level + 1) * amount; // Times amount is for clay as it drops 4 per block
+				amount += extra;
 
-			int luckstat = (DataHandler.hasTag(tool, getKey() + "_stat_luck", PersistentDataType.INTEGER))
-					? DataHandler.getTag(tool, getKey() + "_stat_luck", PersistentDataType.INTEGER)
-					: 0;
-			DataHandler.setTag(tool, getKey() + "_stat_luck", luckstat + extra, PersistentDataType.INTEGER);
-			//Times amount is for clay as it drops 4 per block
+				int luckstat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_luck", PersistentDataType.INTEGER, 0);
+				DataHandler.setTag(tool, getKey() + "_stat_luck", luckstat + extra, PersistentDataType.INTEGER);
+			}
 		}
 
 		if (!(loot == Material.AIR || amount <= 0)) {
@@ -312,9 +311,7 @@ public class AutoSmelt extends Modifier implements Listener {
 				Sound.ENTITY_GENERIC_BURN, 0.2F, 0.5F);
 
 		//Track stats
-		int stat = (DataHandler.hasTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
+		final int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 		DataHandler.setTag(tool, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
 
 		ChatWriter.logModifier(player, event, this, tool, "Block(" + breakEvent.getBlock().getType() + ")");
@@ -322,13 +319,9 @@ public class AutoSmelt extends Modifier implements Listener {
 
 	@Override
 	public List<String> getStatistics(ItemStack item) {
-		List<String> lore = new ArrayList<>();
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
-		int luckstat = (DataHandler.hasTag(item, getKey() + "_stat_luck", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_luck", PersistentDataType.INTEGER)
-				: 0;
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
+		final int luckstat = DataHandler.getTagOrDefault(item, getKey() + "_stat_luck", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Auto-Smelt.Statistic_Used")
 				.replaceAll("%amount", String.valueOf(stat)));
 		if (Luck.instance().isAllowed()) {

@@ -200,6 +200,7 @@ permissions:
       minetinker.modifiers.experienced.*: true
       minetinker.modifiers.explosive.*: true
       minetinker.modifiers.extramodifier.*: true
+      minetinker.modifiers.farming.*: true
       minetinker.modifiers.fiery.*: true
       minetinker.modifiers.freezing.*: true
       minetinker.modifiers.glowing.*: true
@@ -217,6 +218,7 @@ permissions:
       minetinker.modifiers.melting.*: true
       minetinker.modifiers.multijump.*: true
       minetinker.modifiers.multishot.*: true
+      minetinker.modifiers.mutating.*: true
       minetinker.modifiers.nightseeker.*: true
       minetinker.modifiers.phasing.*: true
       minetinker.modifiers.photosynthesis.*: true
@@ -248,6 +250,7 @@ permissions:
       minetinker.modifiers.wildhunt.*: true
       minetinker.modifiers.withered.*: true
       minetinker.modifiers.shrouded.*: true
+      minetinker.modifiers.zealous.*: true
 
   minetinker.modifiers.antiarrowplating.*:
     children:
@@ -372,6 +375,21 @@ permissions:
     default: true
   minetinker.modifiers.beheading.use:
     description: Allows to use Beheading on a MineTinker-Tool
+    default: true
+
+  minetinker.modifiers.farming.*:
+    children:
+      minetinker.modifiers.farming.apply: true
+      minetinker.modifiers.farming.craft: true
+      minetinker.modifiers.farming.use: true
+  minetinker.modifiers.farming.apply:
+    description: Allows to apply Farming to a MineTinker-Hoe
+    default: true
+  minetinker.modifiers.farming.craft:
+    description: Allows to craft a Farming-Modifiers
+    default: true
+  minetinker.modifiers.farming.use:
+    description: Allows to use Farming on a MineTinker-Hoe
     default: true
 
   minetinker.modifiers.berserk.*:
@@ -920,6 +938,17 @@ permissions:
     description: Allows to use Timber on a MineTinker-Tool
     default: true
 
+  minetinker.modifiers.mutating.*:
+    children:
+      minetinker.modifiers.mutating.apply: true
+      minetinker.modifiers.mutating.use: true
+  minetinker.modifiers.mutating.apply:
+    description: Allows to apply Mutating to a MineTinker-Tool
+    default: true
+  minetinker.modifiers.mutating.use:
+    description: Allows to use Mutating on a MineTinker-Tool
+    default: true
+
   minetinker.modifiers.webbed.*:
     children:
       minetinker.modifiers.webbed.apply: true
@@ -962,6 +991,21 @@ permissions:
     default: true
   minetinker.modifiers.shadowdive.use:
     description: Allows to use Shadow Dive on a MineTinker-Boot
+    default: true
+
+  minetinker.modifiers.zealous.*:
+    children:
+      minetinker.modifiers.zealous.apply: true
+      minetinker.modifiers.zealous.use: true
+      minetinker.modifiers.zealous.craft: true
+  minetinker.modifiers.zealous.apply:
+    description: Allows to apply Zealous to a MineTinker-Weapon
+    default: true
+  minetinker.modifiers.zealous.use:
+    description: Allows to use Zealous on a MineTinker-Weapon
+    default: true
+  minetinker.modifiers.zealous.craft:
+    description: Allows to craft a Zealous-Modifiers
     default: true
 
   #Builderswands:

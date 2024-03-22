@@ -8,7 +8,6 @@ import de.flo56958.minetinker.api.events.ToolUpgradeEvent;
 import de.flo56958.minetinker.data.Lists;
 import de.flo56958.minetinker.modifiers.ModManager;
 import de.flo56958.minetinker.modifiers.Modifier;
-import de.flo56958.minetinker.modifiers.types.ExtraModifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
 import de.flo56958.minetinker.utils.LanguageManager;
@@ -19,12 +18,12 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Random;
 
 public class TinkerListener implements Listener {
@@ -63,9 +62,8 @@ public class TinkerListener implements Listener {
 		final ItemStack tool = event.getTool();
 		final Modifier mod = event.getMod();
 
-		if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnModding")) {
+		if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnModding"))
 			player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1.0F, 0.5F);
-		}
 
 		ChatWriter.sendActionBar(player,
 				LanguageManager.getString("TinkerListener.ModifierApply", player)
@@ -83,24 +81,22 @@ public class TinkerListener implements Listener {
 		final ItemStack tool = event.getTool();
 		final Modifier mod = event.getMod();
 
-		if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnFail")) {
+		if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnFail"))
 			player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_BREAK, 1.0F, 0.5F);
-		}
+        if (event.isCommand()) return;
 
-		if (!event.isCommand()) {
-			ChatWriter.sendActionBar(player,
-					LanguageManager.getString("TinkerListener.ModifierFail", player)
-							.replace("%mod", mod.getColor() + mod.getName() + ChatColor.WHITE)
-							.replace("%tool", ChatWriter.getDisplayName(tool) + ChatColor.WHITE)
-							.replace("%cause", event.getFailCause().toString(player)));
-			ChatWriter.log(false, player.getDisplayName() + " failed to apply " + mod.getColor()
-					+ mod.getName() + ChatColor.GRAY + " " + (modManager.getModLevel(tool, mod) + 1) + " on "
-					+ ChatWriter.getDisplayName(tool) + ChatColor.GRAY + " (" + tool.getType() + ") ("
-					+ event.getFailCause().toString() + ")");
-		}
-	}
+        ChatWriter.sendActionBar(player,
+                LanguageManager.getString("TinkerListener.ModifierFail", player)
+                        .replace("%mod", mod.getColor() + mod.getName() + ChatColor.WHITE)
+                        .replace("%tool", ChatWriter.getDisplayName(tool) + ChatColor.WHITE)
+                        .replace("%cause", event.getFailCause().toString(player)));
+        ChatWriter.log(false, player.getDisplayName() + " failed to apply " + mod.getColor()
+                + mod.getName() + ChatColor.GRAY + " " + (modManager.getModLevel(tool, mod) + 1) + " on "
+                + ChatWriter.getDisplayName(tool) + ChatColor.GRAY + " (" + tool.getType() + ") ("
+                + event.getFailCause().toString() + ")");
+    }
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
 	public void onToolLevelUp(@NotNull final ToolLevelUpEvent event) {
 		final Player player = event.getPlayer();
 		final ItemStack tool = event.getTool();
@@ -116,9 +112,7 @@ public class TinkerListener implements Listener {
 					final int n = rand.nextInt(100);
 
 					if (n <= config.getInt("LevelUpEvents.DurabilityRepair.percentage")) {
-						final Damageable dam = (Damageable) tool.getItemMeta();
-
-						if (dam != null) {
+						if (tool.getItemMeta() instanceof final Damageable dam) {
 							dam.setDamage(0);
 							tool.setItemMeta(dam);
 						}
@@ -162,39 +156,6 @@ public class TinkerListener implements Listener {
 					}
 				}
 
-				if (config.getBoolean("LevelUpEvents.RandomModifier.enabled")) {
-					if (rand.nextInt(100) <= config.getInt("LevelUpEvents.RandomModifier.percentage")) {
-						int max = rand.nextInt(config.getInt("LevelUpEvents.RandomModifier.MaximumAmountOfModifiers")) + 1;
-						for (int j = 0; j < max; j++) {
-							final List<Modifier> mods = modManager.getAllowedMods();
-							//necessary as the failed modifiers get removed from the list (so a copy is in order)
-
-							if (!config.getBoolean("LevelUpEvents.RandomModifier.AllowExtraModifier")) {
-								mods.remove(ExtraModifier.instance());
-							}
-
-							int index;
-							while (!appliedRandomMod && !mods.isEmpty()) {
-								index = rand.nextInt(mods.size());
-								final Modifier mod = mods.get(index);
-								if (config.getBoolean("LevelUpEvents.RandomModifier.DropAsItem", false)) {
-									appliedRandomMod = true;
-									if (!player.getInventory().addItem(mod.getModItem()).isEmpty()) { //adds items to (full) inventory
-										player.getWorld().dropItem(player.getLocation(), mod.getModItem()); //drops item when inventory is full
-									} // no else as it gets added in if
-								} else {
-									appliedRandomMod = modManager.addMod(player, tool, mod,
-											false, true, false,
-											config.getBoolean("LevelUpEvents.AppliedModifiersConsiderSlots"));
-								}
-								if (!appliedRandomMod) {
-									mods.remove(index); //Remove the failed modifier from the list of the possibles
-								}
-							}
-						}
-					}
-				}
-
 				if (config.getBoolean("LevelUpEvents.DropXP.enabled")) {
 					final int n = rand.nextInt(100);
 
@@ -216,18 +177,6 @@ public class TinkerListener implements Listener {
 			ChatWriter.log(false, player.getDisplayName() + " leveled up " + ChatWriter.getDisplayName(tool) + ChatColor.WHITE + " (" + tool.getType() + ")!");
 		}
 
-		final int amount = config.getInt("AddModifierSlotsPerLevel");
-
-		if (amount > 0 && !(config.getBoolean("LevelUpEvents.RandomModifier.DisableAddingNewSlots") && appliedRandomMod)) {
-			int slots = modManager.getFreeSlots(tool);
-
-			if (!(slots == Integer.MAX_VALUE || slots < 0)) {
-				slots += amount;
-			} else {
-				slots = Integer.MAX_VALUE;
-			}
-
-			modManager.setFreeSlots(tool, slots);
-		}
-	}
+		event.setNewSlots(event.getNewSlots() + config.getInt("AddModifierSlotsPerLevel"));
+    }
 }

@@ -5,7 +5,6 @@ import de.flo56958.minetinker.data.Lists;
 import de.flo56958.minetinker.data.ToolType;
 import de.flo56958.minetinker.modifiers.ModManager;
 import de.flo56958.minetinker.modifiers.Modifier;
-import de.flo56958.minetinker.modifiers.types.Power;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.Updater;
@@ -33,7 +32,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PlayerListener implements Listener {
 
@@ -46,40 +44,25 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(@NotNull final InventoryClickEvent event) {
-		if (Lists.WORLDS.contains(event.getWhoClicked().getWorld().getName())) {
-			return;
+		if (Lists.WORLDS.contains(event.getWhoClicked().getWorld().getName())) return;
 
-		}
-		if (event.getSlot() < 0) {
-			return;
-		}
+		if (event.getSlot() < 0) return;
 
 		if (!(event.getClickedInventory() instanceof PlayerInventory
-				|| event.getClickedInventory() instanceof DoubleChestInventory)) {
+				|| event.getClickedInventory() instanceof DoubleChestInventory))
 			return;
-		}
 
 		final ItemStack tool = event.getCurrentItem();
+		if (tool == null) return;
 
-		if (tool == null) {
-			return;
-		}
-
-		if (!(modManager.isToolViable(tool) || modManager.isWandViable(tool) || modManager.isArmorViable(tool))) {
-			return;
-		}
-
-		if (!(event.getWhoClicked() instanceof Player)) {
-			return;
-		}
+		if (!(modManager.isToolViable(tool) || modManager.isWandViable(tool) || modManager.isArmorViable(tool))) return;
+		if (!(event.getWhoClicked() instanceof Player)) return;
 
 		//There is a duplication bug in creative, the event does not get executed correctly somehow
 		//TODO: Remove if paper/spigot/minecraft bug is resolved
 		//The feature is therefore disabled for creative, should be very low priority to fix as if you are in creative
 		//you should be able to execute a few commands as well
-		if (event.getWhoClicked().getGameMode() == GameMode.CREATIVE || event.getWhoClicked().getGameMode() == GameMode.SPECTATOR) {
-			return;
-		}
+		if (event.getWhoClicked().getGameMode() == GameMode.CREATIVE || event.getWhoClicked().getGameMode() == GameMode.SPECTATOR) return;
 
 		final ItemStack repair = event.getCursor();
 		if (repair == null) return;
@@ -89,7 +72,7 @@ public class PlayerListener implements Listener {
 			if (!MineTinker.getPlugin().getConfig().getBoolean("ModifiableInInventory"))
 				return;
 
-			Modifier mod = modManager.getModifierFromItem(repair);
+			final Modifier mod = modManager.getModifierFromItem(repair);
 			if (mod != null) { //shouldn't be necessary
 				while(repair.getAmount() > 0) {
 					if (modManager.addMod((Player) event.getWhoClicked(), tool, mod,
@@ -110,14 +93,12 @@ public class PlayerListener implements Listener {
 
 		//Check if the player can repair
 		if (!(MineTinker.getPlugin().getConfig().getBoolean("Repairable")
-				&& event.getWhoClicked().hasPermission("minetinker.tool.repair"))) {
+				&& event.getWhoClicked().hasPermission("minetinker.tool.repair")))
 			return;
-		}
 
 		final ItemMeta repairMeta = repair.getItemMeta();
-		if (repairMeta != null) {
+		if (repairMeta != null)
 			if (repairMeta.hasDisplayName() || repairMeta.hasLore()) return;
-		}
 
 		boolean eligible = false;
 
@@ -187,55 +168,52 @@ public class PlayerListener implements Listener {
 			}
 		}
 
-		if (eligible) {
-			final Damageable meta = (Damageable) tool.getItemMeta();
+        if (!eligible) return;
 
-			if (meta == null) {
-				return;
-			}
+        final Damageable meta = (Damageable) tool.getItemMeta();
 
-			int dura = meta.getDamage();
-			final short maxDura = tool.getType().getMaxDurability();
-			int amount = event.getWhoClicked().getItemOnCursor().getAmount();
+        if (meta == null) return;
 
-			//Calculate the maximum required Materials to restore to full
-			int requiredMaterial;
-			switch (ToolType.get(tool.getType())) {
-				case AXE, PICKAXE, FISHINGROD, CROSSBOW, BOW -> requiredMaterial = 3;
-				case BOOTS -> requiredMaterial = 4;
-				case CHESTPLATE, ELYTRA -> requiredMaterial = 8;
-				case HELMET -> requiredMaterial = 5;
-				case HOE, TRIDENT, SWORD, SHEARS, OTHER -> requiredMaterial = 2;
-				case LEGGINGS -> requiredMaterial = 7;
-				case SHIELD -> requiredMaterial = 6;
-				case SHOVEL -> requiredMaterial = 1;
-				default -> {
-					return;
-				}
-			}
+        int dura = meta.getDamage();
+        final short maxDura = tool.getType().getMaxDurability();
+        int amount = event.getWhoClicked().getItemOnCursor().getAmount();
 
-			final float percent = 1.0f / requiredMaterial;
+        //Calculate the maximum required Materials to restore to full
+        int requiredMaterial;
+        switch (ToolType.get(tool.getType())) {
+            case AXE, PICKAXE, FISHINGROD, CROSSBOW, BOW -> requiredMaterial = 3;
+            case BOOTS -> requiredMaterial = 4;
+            case CHESTPLATE, ELYTRA -> requiredMaterial = 8;
+            case HELMET -> requiredMaterial = 5;
+            case HOE, TRIDENT, SWORD, SHEARS, OTHER -> requiredMaterial = 2;
+            case LEGGINGS -> requiredMaterial = 7;
+            case SHIELD -> requiredMaterial = 6;
+            case SHOVEL -> requiredMaterial = 1;
+            default -> {
+                return;
+            }
+        }
 
-			while (amount > 0 && dura > 0) {
-				dura = Math.max(Math.round(dura - (maxDura * percent)), 0);
-				amount--;
-			}
+        final float percent = 1.0f / requiredMaterial;
 
-			meta.setDamage(dura);
-			tool.setItemMeta(meta);
+        while (amount > 0 && dura > 0) {
+            dura = Math.max(Math.round(dura - (maxDura * percent)), 0);
+            amount--;
+        }
 
-			repair.setAmount(amount);
-			event.setCancelled(true);
-		}
-	}
+        meta.setDamage(dura);
+        tool.setItemMeta(meta);
+
+        repair.setAmount(amount);
+        event.setCancelled(true);
+    }
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
 	public void onLootGenerate(@NotNull LootGenerateEvent event) {
-		if (MineTinker.getPlugin().getConfig().getBoolean("ConvertLoot.ChestLoot", true)) {
-			for (ItemStack stack : event.getLoot()) {
-				modManager.convertLoot(stack, null);
-			}
-		}
+		if (!MineTinker.getPlugin().getConfig().getBoolean("ConvertLoot.ChestLoot", true))
+			return;
+
+		event.getLoot().forEach(stack -> modManager.convertLoot(stack, null));
 	}
 
 
@@ -248,7 +226,6 @@ public class PlayerListener implements Listener {
 	public void onJoin(@NotNull final PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
 		Lists.BLOCKFACE.put(player, BlockFace.SELF);
-		Power.HAS_POWER.computeIfAbsent(player, p -> new AtomicBoolean(false));
 
 		if (MineTinker.getPlugin().getConfig().getBoolean("CheckForUpdates")) {
 			if (player.hasPermission("minetinker.update.notify")) {
@@ -291,7 +268,6 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void onQuit(@NotNull final PlayerQuitEvent event) {
 		Lists.BLOCKFACE.remove(event.getPlayer());
-		Power.HAS_POWER.remove(event.getPlayer());
 	}
 
 	/**
@@ -301,39 +277,24 @@ public class PlayerListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.LOW)
 	public void onInteract(@NotNull final PlayerInteractEvent event) {
-		if (Lists.WORLDS.contains(event.getPlayer().getWorld().getName())) {
-			return;
-		}
+		if (Lists.WORLDS.contains(event.getPlayer().getWorld().getName())) return;
 
-		Player player = event.getPlayer();
+		final Player player = event.getPlayer();
 
-		if (!event.getBlockFace().equals(BlockFace.SELF)) {
-			if (!Power.HAS_POWER.getOrDefault(event.getPlayer(), new AtomicBoolean(false)).get())
-				Lists.BLOCKFACE.replace(event.getPlayer(), event.getBlockFace());
-		}
+		if (event.getBlockFace() != BlockFace.SELF)
+			Lists.BLOCKFACE.replace(event.getPlayer(), event.getBlockFace());
 
-		if (!modManager.allowBookToModifier()) {
-			return;
-		}
+		if (!modManager.allowBookToModifier()) return;
 
-		if (event.getClickedBlock() == null || event.getClickedBlock().getType() != Material.BOOKSHELF) {
-			return;
-		}
+		if (event.getClickedBlock() == null || event.getClickedBlock().getType() != Material.BOOKSHELF) return;
 
-		if (event.getItem() == null || event.getItem().getType() != Material.ENCHANTED_BOOK) {
-			return;
-		}
+		if (event.getItem() == null || event.getItem().getType() != Material.ENCHANTED_BOOK) return;
+		if (event.getItem().getItemMeta() == null
+				|| !(event.getItem().getItemMeta() instanceof final EnchantmentStorageMeta meta)) return;
 
-		if (event.getItem().getItemMeta() == null || !(event.getItem().getItemMeta() instanceof final EnchantmentStorageMeta meta)) {
-			return;
-		}
-
-		for (Map.Entry<Enchantment, Integer> entry : meta.getStoredEnchants().entrySet()) {
+		for (final Map.Entry<Enchantment, Integer> entry : meta.getStoredEnchants().entrySet()) {
 			final Modifier modifier = modManager.getModifierFromEnchantment(entry.getKey());
-
-			if (modifier == null) {
-				continue;
-			}
+			if (modifier == null) continue;
 
 			final ItemStack modDrop = modifier.getModItem();
 			modDrop.setAmount(entry.getValue());
@@ -345,19 +306,19 @@ public class PlayerListener implements Listener {
 			meta.removeStoredEnchant(entry.getKey());
 		}
 
-		if (meta.getStoredEnchants().isEmpty()) {
-			// This seems not to work when the item is in the offhand, and can lead to bugs when nbt data is involved
-			//event.getPlayer().getInventory().removeItem(event.getItem());
-
-			if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-				if (event.getPlayer().getInventory().getItemInMainHand().equals(event.getItem())) {
-					event.getPlayer().getInventory().setItemInMainHand(null);
-				} else {
-					event.getPlayer().getInventory().setItemInOffHand(null);
-				}
-			}
-		} else {
+        if (!meta.getStoredEnchants().isEmpty()) {
 			event.getItem().setItemMeta(meta);
+			return;
 		}
-	}
+
+        // This seems not to work when the item is in the offhand, and can lead to bugs when nbt data is involved
+        //event.getPlayer().getInventory().removeItem(event.getItem());
+
+        if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
+            if (event.getPlayer().getInventory().getItemInMainHand().equals(event.getItem()))
+                event.getPlayer().getInventory().setItemInMainHand(null);
+            else
+                event.getPlayer().getInventory().setItemInOffHand(null);
+        }
+    }
 }

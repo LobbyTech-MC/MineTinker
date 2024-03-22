@@ -67,6 +67,7 @@ public class Beheading extends Modifier implements Listener {
 		config.addDefault("Color", "%DARK_GRAY%");
 		config.addDefault("MaxLevel", 10);
 		config.addDefault("SlotCost", 2);
+		config.addDefault("ModifierItemMaterial", Material.WITHER_SKELETON_SKULL.name());
 		config.addDefault("PercentagePerLevel", 10);  //= 100% at Level 10
 		config.addDefault("DropSpawnEggChancePerLevel", 0);
 
@@ -79,7 +80,7 @@ public class Beheading extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.WITHER_SKELETON_SKULL);
+		init();
 
 		this.percentagePerLevel = config.getInt("PercentagePerLevel", 10);
 		this.dropSpawneggChancePerLevel = config.getInt("DropSpawnEggChancePerLevel", 0);
@@ -100,7 +101,7 @@ public class Beheading extends Modifier implements Listener {
 		if (!modManager.hasMod(tool, this)) return;
 
 		Random rand = new Random();
-		if(this.dropSpawneggChancePerLevel > 0) {
+		if (this.dropSpawneggChancePerLevel > 0) {
 			int n = rand.nextInt(100);
 			int i = this.dropSpawneggChancePerLevel * modManager.getModLevel(tool, this);
 			if (n <= i) {
@@ -146,9 +147,7 @@ public class Beheading extends Modifier implements Listener {
 				ChatWriter.logModifier(player, event, this, tool,
 						String.format("Chance(%d/%d)", n, i), "Entity(" + mob.getType() + ")");
 				//Track stats
-				int stat = (DataHandler.hasTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER))
-						? DataHandler.getTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER)
-						: 0;
+				int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 				DataHandler.setTag(tool, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
 			}
 		}
@@ -157,10 +156,8 @@ public class Beheading extends Modifier implements Listener {
 	@Override
 	public List<String> getStatistics(ItemStack item) {
 		//Track stats
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
-		List<String> lore = new ArrayList<>();
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Beheading.Statistic_Used")
 				.replaceAll("%amount", String.valueOf(stat)));
 		return lore;

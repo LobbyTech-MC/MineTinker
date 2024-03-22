@@ -58,6 +58,7 @@ public class Lifesteal extends Modifier implements Listener {
 		config.addDefault("Color", "%DARK_RED%");
 		config.addDefault("MaxLevel", 3);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.NETHERRACK.name());
 		config.addDefault("PercentToTrigger", 50);
 		config.addDefault("PercentOfDamagePerLevel", 10);
 
@@ -80,7 +81,7 @@ public class Lifesteal extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.NETHERRACK);
+		init();
 
 		this.percentPerLevel = config.getInt("PercentOfDamagePerLevel", 10);
 		this.percentToTrigger = config.getInt("PercentToTrigger", 50);
@@ -114,8 +115,7 @@ public class Lifesteal extends Modifier implements Listener {
 
 		AttributeInstance attribute = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
 
-		if (attribute != null)
-							// for IllegalArgumentExeption if Health is biggen than MaxHealth
+		if (attribute != null) // for IllegalArgumentException if Health is bigger than MaxHealth
 			player.setHealth(Math.min(health, attribute.getValue()));
 
 		ChatWriter.logModifier(player, event, this, tool, String.format("Chance(%d/%d)", n, this.percentToTrigger),

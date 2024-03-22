@@ -11,6 +11,7 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -18,8 +19,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MineTinker extends JavaPlugin {
 
@@ -53,15 +52,12 @@ public class MineTinker extends JavaPlugin {
 					"If you are running a higher Version, please report this as an error.");
 			return;
 		}
-		if (is18compatible) {
+		if (is18compatible)
 			ChatWriter.log(false, "1.18 enhanced features activated!");
-		}
-		if (is19compatible) {
+		if (is19compatible)
 			ChatWriter.log(false, "1.19 enhanced features activated!");
-		}
-		if (is20compatible) {
+		if (is20compatible)
 			ChatWriter.log(false, "1.20 enhanced features activated!");
-		}
 	}
 
 	@Override
@@ -84,8 +80,13 @@ public class MineTinker extends JavaPlugin {
 		ChatWriter.reload();
 
 		final TabExecutor cmd = new CommandManager();
-		this.getCommand("minetinker").setExecutor(cmd); // must be after internals as it would throw a NullPointerException
-		this.getCommand("minetinker").setTabCompleter(cmd);
+		final PluginCommand command = this.getCommand("minetinker");
+		if (command == null) {
+			ChatWriter.logError("Could not register the command!");
+		} else {
+			command.setExecutor(cmd); // must be after internals as it would throw a NullPointerException
+			command.setTabCompleter(cmd);
+		}
 
 		ChatWriter.logInfo(LanguageManager.getString("StartUp.Commands"));
 
@@ -106,7 +107,6 @@ public class MineTinker extends JavaPlugin {
 		Bukkit.getPluginManager().registerEvents(new PlayerInfo(), this);
 		Bukkit.getPluginManager().registerEvents(new EnchantingListener(), this);
 		Bukkit.getPluginManager().registerEvents(new GrindstoneListener(), this);
-		Bukkit.getPluginManager().registerEvents(new SmithingTableListener(), this);
 
 		final FileConfiguration elytraConf = ConfigurationManager.getConfig("Elytra.yml");
 		elytraConf.options().copyDefaults(true);
@@ -117,11 +117,6 @@ public class MineTinker extends JavaPlugin {
 			Bukkit.getPluginManager().registerEvents(new BuildersWandListener(), this);
 			BuildersWandListener.reload();
 			ChatWriter.log(false, LanguageManager.getString("StartUp.BuildersWands"));
-		}
-
-		if (getConfig().getBoolean("EasyHarvest.enabled")) {
-			Bukkit.getPluginManager().registerEvents(new EasyHarvestListener(), this);
-			ChatWriter.log(false, LanguageManager.getString("StartUp.EasyHarvest"));
 		}
 
 		if (getConfig().getBoolean("actionbar-on-exp-gain", false))
@@ -146,7 +141,6 @@ public class MineTinker extends JavaPlugin {
 		ChatWriter.log(true, LanguageManager.getString("StartUp.DebugLogging"));
 
 		for (final Player current : Bukkit.getServer().getOnlinePlayers()) {
-			Power.HAS_POWER.computeIfAbsent(current, player -> new AtomicBoolean(false));
 			Lists.BLOCKFACE.put(current, BlockFace.SELF);
 		}
 
@@ -170,6 +164,7 @@ public class MineTinker extends JavaPlugin {
 		modManager.register(Experienced.instance());
 		modManager.register(Explosive.instance());
 		modManager.register(ExtraModifier.instance());
+		modManager.register(Farming.instance());
 		modManager.register(Fiery.instance());
 		modManager.register(Freezing.instance());
 		modManager.register(Glowing.instance());
@@ -187,6 +182,7 @@ public class MineTinker extends JavaPlugin {
 		modManager.register(Melting.instance());
 		modManager.register(MultiJump.instance());
 		modManager.register(MultiShot.instance());
+		modManager.register(Mutating.instance());
 		modManager.register(Nightseeker.instance());
 		modManager.register(Phasing.instance());
 		modManager.register(Photosynthesis.instance());
@@ -220,6 +216,7 @@ public class MineTinker extends JavaPlugin {
 		modManager.register(Webbed.instance());
 		modManager.register(WildHunt.instance());
 		modManager.register(Withered.instance());
+		modManager.register(Zealous.instance());
 	}
 
 	public void AddSoftdependMods() {

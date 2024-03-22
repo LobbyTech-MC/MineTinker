@@ -70,6 +70,7 @@ public class Magical extends Modifier implements Listener {
 		config.addDefault("Color", "%DARK_PURPLE%");
 		config.addDefault("MaxLevel", 5);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.ARROW.name());
 
 		config.addDefault("MultiplierArrowSpeed", 0.5);
 		config.addDefault("MultiplierArrowDamagePerLevel", 1.25);
@@ -95,7 +96,7 @@ public class Magical extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.ARROW);
+		init();
 
 		this.multiplierArrowSpeed = config.getDouble("MultiplierArrowSpeed", 0.3);
 		this.multiplierDamagePerLevel = config.getDouble("MultiplierArrowDamagePerLevel", 1.25);
@@ -135,17 +136,17 @@ public class Magical extends Modifier implements Listener {
 		arrow.setGravity(false);
 		//arrow.setGlowing(true);
 
-		final Vector velocity = arrow.getVelocity().multiply(this.multiplierArrowSpeed).clone();
+		final Vector velocity = arrow.getVelocity().multiply(this.multiplierArrowSpeed);
 		arrow.setVelocity(velocity.clone());
 		arrow.setDamage(arrow.getDamage() * Math.pow(this.multiplierDamagePerLevel, modLevel));
 
 		ChatWriter.logModifier(player, event, this, tool, "Cost(" + this.experienceCost + ")");
 
 		for (int i = 1; i < 30; i++) {
-			Bukkit.getScheduler().runTaskLater(MineTinker.getPlugin(), () -> arrow.setVelocity(velocity.clone()), i * 20L);
+			Bukkit.getScheduler().runTaskLater(this.getSource(), () -> arrow.setVelocity(velocity.clone()), i * 20L);
 		}
 
-		Bukkit.getScheduler().runTaskLater(MineTinker.getPlugin(), () -> arrow.setGravity(true), 30 * 20L);
+		Bukkit.getScheduler().runTaskLater(this.getSource(), () -> arrow.setGravity(true), 30 * 20L);
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)

@@ -30,21 +30,12 @@ import java.util.Random;
 public class ArmorListener implements Listener {
 
 	private static final ModManager modManager = ModManager.instance();
-	private static final ArrayList<EntityDamageEvent.DamageCause> blacklistedCauses = new ArrayList<>();
-
-	static {
-		//List to disable XP-Farming on Armor with Suicide-Commands
-		blacklistedCauses.add(EntityDamageEvent.DamageCause.SUICIDE); //vanilla Suicide command
-		blacklistedCauses.add(EntityDamageEvent.DamageCause.VOID); //other Suicide commands
-		blacklistedCauses.add(EntityDamageEvent.DamageCause.CUSTOM); //Essentials Suicide
-	}
 
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onPlayerDamage(@NotNull final EntityDamageEvent event) {
 		if (event.getDamage() <= 0) return;
 		if (Lists.WORLDS.contains(event.getEntity().getWorld().getName())) return;
 		if (!(event.getEntity() instanceof final Player player)) return;
-		if (blacklistedCauses.contains(event.getCause())) return;
 
 		Entity entity = null;
 		EntityDamageByEntityEvent byEntityEvent = null;
@@ -55,13 +46,10 @@ public class ArmorListener implements Listener {
 
 			if (entity instanceof final Arrow arrow) {
 				final ProjectileSource source = arrow.getShooter();
+                if (!(source instanceof Entity)) return;
 
-				if (source instanceof Entity) {
-					entity = (Entity) source;
-				} else {
-					return;
-				}
-			}
+				entity = (Entity) source;
+            }
 		}
 
 		final ArrayList<ItemStack> armor = new ArrayList<>(Arrays.asList(player.getInventory().getArmorContents()));
@@ -71,16 +59,13 @@ public class ArmorListener implements Listener {
 			armor.add(player.getInventory().getItemInOffHand());
 
 		final boolean isBlocking = player.isBlocking() && event.getFinalDamage() == 0.0d;
-		for (ItemStack piece : armor) {
-			if (!modManager.isArmorViable(piece)) {
-				continue;
-			}
+		for (final ItemStack piece : armor) {
+			if (!modManager.isArmorViable(piece)) continue;
 
-			if (byEntityEvent != null) {
+			if (byEntityEvent != null)
 				Bukkit.getPluginManager().callEvent(new MTEntityDamageByEntityEvent(player, piece, entity, byEntityEvent, isBlocking));
-			} else {
+			else
 				Bukkit.getPluginManager().callEvent(new MTEntityDamageEvent(player, piece, event, isBlocking));
-			}
 		}
 	}
 
@@ -90,8 +75,13 @@ public class ArmorListener implements Listener {
 		if (MineTinker.getPlugin().getConfig().getBoolean("DisableNonPvPDamageExpArmor", false)
 				&& ToolType.ARMOR.contains(event.getTool().getType()))
 			return;
+
 		if (MineTinker.getPlugin().getConfig().getBoolean("DisableNonPvPDamageExpWeapon", false)
 				&& !ToolType.TOOLS.contains(event.getTool().getType()))
+			return;
+
+		if (MineTinker.getPlugin().getConfig().getStringList("DisableExpFromDamageCause")
+				.contains(event.getEvent().getCause().toString()))
 			return;
 
 		expCalculation(event.isBlocking(), event.getTool(), event.getEvent(), event.getPlayer());
@@ -103,6 +93,7 @@ public class ArmorListener implements Listener {
 				&& ToolType.ARMOR.contains(event.getTool().getType())
 				&& !(event.getEntity() instanceof Player))
 			return;
+
 		if (MineTinker.getPlugin().getConfig().getBoolean("DisableNonPvPDamageExpWeapon", false)
 				&& ToolType.TOOLS.contains(event.getTool().getType())
 				&& !(event.getEntity() instanceof Player))
@@ -123,36 +114,22 @@ public class ArmorListener implements Listener {
 		FileConfiguration config = MineTinker.getPlugin().getConfig();
 		int amount = config.getInt("ExpPerEntityHit", 1);
 
-		if (config.getBoolean("EnableDamageExp", true)) {
+		if (config.getBoolean("EnableDamageExp", true))
 			amount = Math.max(amount, (int) Math.round(event.getFinalDamage()));
 			//Max because the lowest exp amount you should get is ExpPerEntityHit
-		}
-
-		if (config.getBoolean("DisableExpFromFalldamage", false)
-				&& event.getCause() == EntityDamageEvent.DamageCause.FALL) {
-			return;
-		}
 
 		modManager.addExp(player, tool, amount, true);
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onElytraDamage(@NotNull final PlayerItemDamageEvent event) {
-		if (!event.getPlayer().isGliding()) {
-			return;
-		}
-
-		if (event.getItem().getType() != Material.ELYTRA) {
-			return;
-		}
-
-		if (!modManager.isArmorViable(event.getItem())) {
-			return;
-		}
+		if (!event.getPlayer().isGliding()) return;
+		if (event.getItem().getType() != Material.ELYTRA) return;
+		if (!modManager.isArmorViable(event.getItem())) return;
 
 		final int chance = new Random().nextInt(100);
-		if (chance < ConfigurationManager.getConfig("Elytra.yml").getInt("ExpChanceWhileFlying")) {
-			modManager.addExp(event.getPlayer(), event.getItem(), MineTinker.getPlugin().getConfig().getInt("ExpPerEntityHit"), true);
-		}
-	}
+        if (chance >= ConfigurationManager.getConfig("Elytra.yml").getInt("ExpChanceWhileFlying")) return;
+
+        modManager.addExp(event.getPlayer(), event.getItem(), MineTinker.getPlugin().getConfig().getInt("ExpPerEntityHit"), true);
+    }
 }

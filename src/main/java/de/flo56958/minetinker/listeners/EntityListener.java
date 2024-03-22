@@ -59,7 +59,6 @@ public class EntityListener implements Listener {
 //        }
 
 		if (!modManager.isToolViable(tool)) return;
-
 		if (!modManager.durabilityCheck(event, player, tool)) return;
 
 		Bukkit.getPluginManager().callEvent(new MTEntityDamageByEntityEvent(player, tool, event.getEntity(), event));
@@ -68,7 +67,7 @@ public class EntityListener implements Listener {
 				MineTinker.getPlugin().getConfig().getInt("ExtraExpPerEntityHit."
 						+ event.getEntity().getType(), 0), true);
 
-		if (event.getEntity() instanceof Trident trident) trident.setItem(tool);
+		if (event.getDamager() instanceof Trident trident) trident.setItem(tool);
 	}
 
 	@Nullable
@@ -90,7 +89,6 @@ public class EntityListener implements Listener {
 	public void onDeath(@NotNull final EntityDeathEvent event) {
 		final LivingEntity mob = event.getEntity();
 		final Player player = mob.getKiller();
-
 		if (Lists.WORLDS.contains(mob.getWorld().getName())) return;
 
 		final FileConfiguration config = MineTinker.getPlugin().getConfig();
@@ -137,6 +135,9 @@ public class EntityListener implements Listener {
 
 		modManager.addExp(player, tool, MineTinker.getPlugin().getConfig()
 				.getInt("ExtraExpPerEntityDeath." + event.getEntity().getType(), 0), true);
+
+		if (mob.getLastDamageCause() instanceof EntityDamageByEntityEvent lasteven)
+			if (lasteven.getDamager() instanceof Trident trident) trident.setItem(tool);
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -145,7 +146,9 @@ public class EntityListener implements Listener {
 
 		ItemStack tool = player.getInventory().getItemInMainHand();
 
-		if (event.getHitBlock() == null && !ToolType.FISHINGROD.contains(tool.getType())) return;
+		// Give fishing rods exp here instead of on launch as there is a durability cost on hit
+		if (ToolType.FISHINGROD.contains(tool.getType()))
+			modManager.addExp(player, tool, MineTinker.getPlugin().getConfig().getInt("ExpPerArrowShot"), true);
 
 		if (event.getEntity() instanceof Trident || event.getEntity() instanceof Arrow) {
 			List<MetadataValue> tools = event.getEntity().getMetadata(MineTinker.getPlugin().getName() + "item");
@@ -198,19 +201,20 @@ public class EntityListener implements Listener {
 
 		if (!modManager.durabilityCheck(event, player, tool)) return;
 
-		modManager.addExp(player, tool, MineTinker.getPlugin().getConfig().getInt("ExpPerArrowShot"), true);
+		if (!ToolType.FISHINGROD.contains(tool.getType())) // Disable Exp for spam clicking
+			modManager.addExp(player, tool, MineTinker.getPlugin().getConfig().getInt("ExpPerArrowShot"), true);
 
 		// add item reference to arrow
-		if(!event.getEntity().hasMetadata(MineTinker.getPlugin().getName() + "item")) {
+		if(!event.getEntity().hasMetadata(MineTinker.getPlugin().getName() + "item"))
 			event.getEntity().setMetadata(MineTinker.getPlugin().getName() + "item",
 					new FixedMetadataValue(MineTinker.getPlugin(), tool));
-		}
 
 		Bukkit.getPluginManager().callEvent(new MTProjectileLaunchEvent(player, tool, event));
 
-        /*
-        Self-Repair and Experienced will no longer trigger on bowfire
-         */
+		// Trident#setItem only creates a NMScopy so this update step is necessary for every change to the ItemStack
+		if (event.getEntity() instanceof Trident trident) trident.setItem(tool);
+
+		// Self-Repair and Experienced will no longer trigger on bowfire
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -240,12 +244,10 @@ public class EntityListener implements Listener {
 
 	private boolean playSound(final EntityShootBowEvent event, final Player player, final ItemStack offHand) {
 		final Modifier mod = modManager.getModifierFromItem(offHand);
+        if (mod == null || mod.getModItem().getType() != Material.ARROW) return false;
 
-		if (mod != null && mod.getModItem().getType() == Material.ARROW) {
-			event.setCancelled(true);
-			player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
-			return true;
-		}
-		return false;
-	}
+        event.setCancelled(true);
+        player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
+        return true;
+    }
 }

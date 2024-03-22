@@ -74,6 +74,7 @@ public class MultiShot extends Modifier implements Listener {
 		config.addDefault("Color", "%YELLOW%");
 		config.addDefault("MaxLevel", 5);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.ARROW.name());
 		config.addDefault("ArrowSpread", 5.0);
 		config.addDefault("NeedsArrows", true);
 		config.addDefault("UseEnchantOnCrossbow", false);
@@ -97,7 +98,7 @@ public class MultiShot extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.ARROW);
+		init();
 
 		this.spread = config.getDouble("ArrowSpread", 5.0);
 		this.needsArrows = config.getBoolean("NeedsArrows", true);
@@ -134,7 +135,7 @@ public class MultiShot extends Modifier implements Listener {
 		entity.setMaximumNoDamageTicks(0);
 		event.setCancelled(false);
 
-		Bukkit.getScheduler().runTaskLater(MineTinker.getPlugin(), () -> entity.setMaximumNoDamageTicks(20), 20);
+		Bukkit.getScheduler().runTaskLater(this.getSource(), () -> entity.setMaximumNoDamageTicks(20), 20);
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -151,18 +152,18 @@ public class MultiShot extends Modifier implements Listener {
 		if (ToolType.CROSSBOW.contains(tool.getType()) && getConfig().getBoolean("UseEnchantOnCrossbow")) return;
 		if (!modManager.isToolViable(tool)) return;
 
-		int modLevel = modManager.getModLevel(tool, this);
+		final int modLevel = modManager.getModLevel(tool, this);
 		if (modLevel <= 0) return;
 
-		Vector vel = arrow.getVelocity().clone();
-		Location loc = arrow.getLocation().clone();
+		final Vector vel = arrow.getVelocity();
+		final Location loc = arrow.getLocation();
 
 		ChatWriter.logModifier(player, event, this, tool);
 
 		final int amount = (ToolType.CROSSBOW.contains(tool.getType())) ? 1 : 2;
 
 		for (int i = 1; i <= modLevel; i++) {
-			if (!player.getGameMode().equals(GameMode.CREATIVE)) {
+			if (!player.getGameMode().equals(GameMode.CREATIVE) && arrow.getPickupStatus() != AbstractArrow.PickupStatus.CREATIVE_ONLY) {
 				boolean hasArrow = true;
 				if (needsArrows) {
 					hasArrow = false;
@@ -193,7 +194,7 @@ public class MultiShot extends Modifier implements Listener {
 				if (!hasArrow) break;
 			}
 
-			Bukkit.getScheduler().runTaskLater(MineTinker.getPlugin(), () -> {
+			Bukkit.getScheduler().runTaskLater(this.getSource(), () -> {
 				final Arrow arr = loc.getWorld().spawnArrow(loc, vel, (float) vel.length(), (float) spread);
 				arr.setShooter(player);
 				arr.setShotFromCrossbow(arrow.isShotFromCrossbow());

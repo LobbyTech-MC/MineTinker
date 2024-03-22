@@ -13,7 +13,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Aquaphilic extends Modifier {
 
@@ -40,7 +43,7 @@ public class Aquaphilic extends Modifier {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-		return new ArrayList<>(Arrays.asList(ToolType.BOOTS, ToolType.HELMET));
+		return Arrays.asList(ToolType.BOOTS, ToolType.HELMET);
 	}
 
 	@Override
@@ -57,6 +60,7 @@ public class Aquaphilic extends Modifier {
 		config.addDefault("Color", "%AQUA%");
 		config.addDefault("MaxLevel", 3); //higher will have no effect on depth strider
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.HEART_OF_THE_SEA.name());
 
 		config.addDefault("EnchantCost", 10);
 		config.addDefault("Enchantable", false);
@@ -77,7 +81,7 @@ public class Aquaphilic extends Modifier {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.HEART_OF_THE_SEA);
+		init();
 	}
 
 	@Override

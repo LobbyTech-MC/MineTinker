@@ -58,6 +58,7 @@ public class Homing extends Modifier implements Listener {
 		config.addDefault("Color", "%GOLD%");
 		config.addDefault("MaxLevel", 5);
 		config.addDefault("SlotCost", 5);
+		config.addDefault("ModifierItemMaterial", Material.OBSERVER.name());
 
 		config.addDefault("EnchantCost", 50);
 		config.addDefault("Enchantable", false);
@@ -83,7 +84,7 @@ public class Homing extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.OBSERVER);
+		init();
 
 		this.radius = config.getInt("HomingRadius", 10);
 		this.accuracy = config.getDouble("AccuracyPerLevel", 0.1);
@@ -118,7 +119,7 @@ public class Homing extends Modifier implements Listener {
 				if (arrow.getVelocity().length() <= 0.1) return;
 				if (arrow.getLastDamageCause() != null) return;
 
-				List<Entity> entities = arrow.getNearbyEntities(Homing.this.radius,Homing.this.radius,Homing.this.radius);
+				final List<Entity> entities = arrow.getNearbyEntities(Homing.this.radius,Homing.this.radius,Homing.this.radius);
 				entities.sort(Comparator.comparing(e -> e.getLocation().distance(arrow.getLocation())));
 				for (final Entity e : entities) {
 					if (e.equals(arrow.getShooter())) continue;
@@ -144,6 +145,6 @@ public class Homing extends Modifier implements Listener {
 			}
 		};
 
-		Bukkit.getServer().getScheduler().runTaskLater(getSource(), runnable, 3);
+		Bukkit.getServer().getScheduler().runTaskLater(this.getSource(), runnable, 3);
 	}
 }

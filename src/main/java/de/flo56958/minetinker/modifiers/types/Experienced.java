@@ -63,6 +63,7 @@ public class Experienced extends Modifier implements Listener {
 		config.addDefault("Color", "%GREEN%");
 		config.addDefault("MaxLevel", 10);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.EXPERIENCE_BOTTLE.name());
 		config.addDefault("PercentagePerLevel", 2); //= 20% at Level 10 -> every 5th hit / block will trigger Experienced
 		config.addDefault("Amount", 1); //How much XP should be dropped when triggered
 
@@ -83,7 +84,7 @@ public class Experienced extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.EXPERIENCE_BOTTLE);
+		init();
 
 		this.percentagePerLevel = config.getInt("PercentagePerLevel", 2);
 		this.amount = config.getInt("Amount", 1);
@@ -132,10 +133,8 @@ public class Experienced extends Modifier implements Listener {
 		if (n <= c) {
 			player.giveExp(this.amount);
 
-			//Track stats
-			int stat = (DataHandler.hasTag(tool, getKey() + "_stat_amount", PersistentDataType.INTEGER))
-					? DataHandler.getTag(tool, getKey() + "_stat_amount", PersistentDataType.INTEGER)
-					: 0;
+			// Track stats
+			int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_amount", PersistentDataType.INTEGER, 0);
 			DataHandler.setTag(tool, getKey() + "_stat_amount", stat + this.amount, PersistentDataType.INTEGER);
 		}
 		ChatWriter.logModifier(player, event, this, tool, String.format("Chance(%d/%d)", n, c));
@@ -143,11 +142,9 @@ public class Experienced extends Modifier implements Listener {
 
 	@Override
 	public List<String> getStatistics(ItemStack item) {
-		//Track stats
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_amount", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_amount", PersistentDataType.INTEGER)
-				: 0;
-		List<String> lore = new ArrayList<>();
+		// Get stats
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_amount", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Experienced.Statistic_Amount")
 				.replaceAll("%amount", String.valueOf(stat)));
 		return lore;

@@ -72,6 +72,7 @@ public class Ender extends Modifier implements Listener {
 		config.addDefault("Color", "%DARK_GREEN%");
 		config.addDefault("MaxLevel", 2);
 		config.addDefault("SlotCost", 2);
+		config.addDefault("ModifierItemMaterial", Material.ENDER_EYE.name());
 		config.addDefault("Sound", true); // Enderman-Teleport-Sound
 		config.addDefault("Particles", true);
 		config.addDefault("GiveNauseaOnUse", true);
@@ -98,7 +99,7 @@ public class Ender extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.ENDER_EYE);
+		init();
 
 		this.hasSound = config.getBoolean("Sound", true);
 		this.hasParticles = config.getBoolean("Particles", true);
@@ -165,14 +166,10 @@ public class Ender extends Modifier implements Listener {
 			player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0F, 0.3F);
 
 		//Track stats
-		int stat = (DataHandler.hasTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
+		final int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 		DataHandler.setTag(tool, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
 
-		double distance = (DataHandler.hasTag(tool, getKey() + "_stat_distance", PersistentDataType.DOUBLE))
-				? DataHandler.getTag(tool, getKey() + "_stat_distance", PersistentDataType.DOUBLE)
-				: 0;
+		double distance = DataHandler.getTagOrDefault(tool, getKey() + "_stat_distance", PersistentDataType.DOUBLE, 0.0D);
 		distance += oldLoc.distance(loc);
 		DataHandler.setTag(tool, getKey() + "_stat_distance", distance, PersistentDataType.DOUBLE);
 
@@ -233,20 +230,14 @@ public class Ender extends Modifier implements Listener {
 		player.teleport(loc);
 
 		//Track stats
-		int stat = (DataHandler.hasTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
+		int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 		DataHandler.setTag(tool, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
 
-		double distance = (DataHandler.hasTag(tool, getKey() + "_stat_distance", PersistentDataType.DOUBLE))
-				? DataHandler.getTag(tool, getKey() + "_stat_distance", PersistentDataType.DOUBLE)
-				: 0;
+		double distance = DataHandler.getTagOrDefault(tool, getKey() + "_stat_distance", PersistentDataType.DOUBLE, 0.0D);
 		distance += oldLoc.distance(loc);
 		DataHandler.setTag(tool, getKey() + "_stat_distance", distance, PersistentDataType.DOUBLE);
 
-		int swapped = (DataHandler.hasTag(tool, getKey() + "_stat_swapped", PersistentDataType.INTEGER))
-				? DataHandler.getTag(tool, getKey() + "_stat_swapped", PersistentDataType.INTEGER)
-				: 0;
+		int swapped = DataHandler.getTagOrDefault(tool, getKey() + "_stat_swapped", PersistentDataType.INTEGER, 0);
 		DataHandler.setTag(tool, getKey() + "_stat_swapped", swapped + 1, PersistentDataType.INTEGER);
 
 		if (this.hasSound) {
@@ -283,16 +274,10 @@ public class Ender extends Modifier implements Listener {
 
 	@Override
 	public List<String> getStatistics(ItemStack item) {
-		List<String> lore = new ArrayList<>();
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
-		double distance = (DataHandler.hasTag(item, getKey() + "_stat_distance", PersistentDataType.DOUBLE))
-				? DataHandler.getTag(item, getKey() + "_stat_distance", PersistentDataType.DOUBLE)
-				: 0;
-		int swapped = (DataHandler.hasTag(item, getKey() + "_stat_swapped", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_swapped", PersistentDataType.INTEGER)
-				: 0;
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
+		final double distance = DataHandler.getTagOrDefault(item, getKey() + "_stat_distance", PersistentDataType.DOUBLE, 0.0D);
+		final int swapped = DataHandler.getTagOrDefault(item, getKey() + "_stat_swapped", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Ender.Statistic_Used")
 				.replaceAll("%amount", String.valueOf(stat)));
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Ender.Statistic_Distance")

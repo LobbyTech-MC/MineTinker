@@ -64,6 +64,7 @@ public class VoidNetting extends CooldownModifier implements Listener {
 		config.addDefault("Color", "%DARK_GRAY%");
 		config.addDefault("MaxLevel", 5);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.COBWEB.name());
 		config.addDefault("RadiusPerLevel", 10);
 		config.addDefault("CooldownInSeconds", 3600.0);
 		config.addDefault("CooldownReductionPerLevel", 0.4);
@@ -86,12 +87,10 @@ public class VoidNetting extends CooldownModifier implements Listener {
 
 		config.addDefault("Recipe.Materials", recipeMaterials);
 
-		// Save Config
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		// Initialize modifier
-		init(Material.COBWEB);
+		init();
 
 		this.radiusPerLevel = config.getInt("RadiusPerLevel", 5);
 		this.cooldownInSeconds = config.getDouble("CooldownInSeconds", 3600.0);
@@ -117,46 +116,47 @@ public class VoidNetting extends CooldownModifier implements Listener {
 
 		if (onCooldown(player, armor, true, event)) return;
 
-		//Add small cooldown to improve server performance
-		setCooldown(armor, Math.round(this.cooldownInSeconds * 0.05));
+		// Add small cooldown to improve server performance
+		setCooldown(armor, 500 /* ms */);
 
-		Bukkit.getScheduler().runTaskAsynchronously(MineTinker.getPlugin(), () -> {
-			//run effect async as it does not need to stop all action on server if search takes to long
+		Bukkit.getScheduler().runTaskAsynchronously(this.getSource(), () -> {
+			// run effect async as it does not need to stop all action on server if search takes to long
+			final World world = player.getWorld();
 			Location loc = player.getLocation();
-			for (int i = 0; i < level * radiusPerLevel; i++) {
-				for (int d = -i; d <= i; d++) {
-					int y = loc.getWorld().getHighestBlockYAt(loc.getBlockX() + d, loc.getBlockZ() + i - Math.abs(d));
-					if (y > 1) {
-						loc = new Location(loc.getWorld(), loc.getBlockX() + d, y + 2, loc.getBlockZ() + i - Math.abs(d));
-						break;
+
+			loop:
+			for (int i = 1; i < level * radiusPerLevel; i++) { // does not check center
+				for (int d = -i; d < i; d++) {
+					int y = world.getHighestBlockYAt(loc.getBlockX() + d, loc.getBlockZ() + i - Math.abs(d));
+					if (y > world.getMinHeight() && y < world.getMaxHeight()) {
+						loc = new Location(world, loc.getBlockX() + d, y + 2, loc.getBlockZ() + i - Math.abs(d));
+						break loop;
 					}
-				}
-				for (int d = -i + 1; d < i; d++) {
-					int y = loc.getWorld().getHighestBlockYAt(loc.getBlockX() + d, loc.getBlockZ() + Math.abs(d) - i);
-					if (y > 1) {
-						loc = new Location(loc.getWorld(), loc.getBlockX() + d, y + 2,loc.getBlockZ() + Math.abs(d) - i);
-						break;
+					y = world.getHighestBlockYAt(loc.getBlockX() + d + 1, loc.getBlockZ() + Math.abs(d + 1) - i);
+					if (y > world.getMinHeight() && y < world.getMaxHeight()) {
+						loc = new Location(world, loc.getBlockX() + d + 1, y + 2, loc.getBlockZ() + Math.abs(d + 1) - i);
+						break loop;
 					}
 				}
 			}
 
 			if (loc.equals(player.getLocation())) {
-				//No suitable place found
+				// No suitable place found
 				ChatWriter.logModifier(player, event, this, armor, "Could not find suitable Block to teleport!");
 				ChatWriter.sendActionBar(player, this.getName() + ": "
 						+ LanguageManager.getString("Modifier.Void-Netting.CouldNotFindBlock", player));
 				return;
 			}
-			Location oldLoc = player.getLocation().clone();
+			final Location oldLoc = player.getLocation().clone();
 			ChatWriter.logModifier(player, event, this, armor,
 					String.format("Location(%d/%d/%d -> %d/%d/%d)",
 							oldLoc.getBlockX(), oldLoc.getBlockY(), oldLoc.getBlockZ(),
 							loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), String.format("Cooldown(%ds)",
 							this.getCooldown(level) / 1000));
 
-			Location finalLoc = loc;
-			Bukkit.getScheduler().runTask(MineTinker.getPlugin(), () -> { //Teleport needs to be in sync
-				//Slow the fall
+			final Location finalLoc = loc;
+			Bukkit.getScheduler().runTask(this.getSource(), () -> { //Teleport needs to be in sync
+				// Slow the fall
 				player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 20, 0, false));
 				player.teleport(finalLoc);
 				player.setVelocity(new Vector(0, 0, 0));
@@ -164,12 +164,12 @@ public class VoidNetting extends CooldownModifier implements Listener {
 				setCooldown(armor);
 
 				if (this.particles) {
-					finalLoc.getWorld().spawnParticle(Particle.PORTAL, finalLoc, 20);
-					finalLoc.getWorld().spawnParticle(Particle.PORTAL, oldLoc, 20);
+					world.spawnParticle(Particle.PORTAL, finalLoc, 20);
+					world.spawnParticle(Particle.PORTAL, oldLoc, 20);
 				}
 				if (this.sound) {
-					player.getWorld().playSound(finalLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
-					player.getWorld().playSound(oldLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+					world.playSound(finalLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+					world.playSound(oldLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
 				}
 			});
 		});

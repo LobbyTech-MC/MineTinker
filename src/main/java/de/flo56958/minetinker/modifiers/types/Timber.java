@@ -7,8 +7,10 @@ import de.flo56958.minetinker.data.ToolType;
 import de.flo56958.minetinker.modifiers.Modifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
+import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.data.DataHandler;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -21,6 +23,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -67,6 +70,7 @@ public class Timber extends Modifier implements Listener {
 		config.addDefault("Allowed", true);
 		config.addDefault("MaxLevel", 2);
 		config.addDefault("SlotCost", 2);
+		config.addDefault("ModifierItemMaterial", Material.EMERALD.name());
 		config.addDefault("Color", "%GREEN%");
 		config.addDefault("MaximumBlocksPerSwing", 250); //-1 to disable it
 
@@ -90,7 +94,8 @@ public class Timber extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.EMERALD);
+		init();
+
 		this.maxBlocks = config.getInt("MaximumBlocksPerSwing", 2000);
 		this.maxBlocks = (this.maxBlocks == -1) ? Integer.MAX_VALUE : this.maxBlocks;
 
@@ -132,7 +137,7 @@ public class Timber extends Modifier implements Listener {
 		final int sap_idx = block.getType().toString().lastIndexOf('_');
 		final Material saplingType = Material.getMaterial(block.getType().toString().substring(0, sap_idx) + "_SAPLING");
 
-		Bukkit.getScheduler().runTaskAsynchronously(MineTinker.getPlugin(), () -> {
+		Bukkit.getScheduler().runTaskAsynchronously(this.getSource(), () -> {
 			final HashSet<Block> trunkBlocks = new HashSet<>();
 			final ArrayList<Block> groundBlocks = new ArrayList<>();
 			if (!parseTree(block, trunkBlocks, groundBlocks, allowed) && !ToolType.SHEARS.contains(tool.getType())) return;
@@ -140,7 +145,7 @@ public class Timber extends Modifier implements Listener {
 			// Sort blocks by distance to the original block (closest first) and break them in that order
 			trunkBlocksList.sort(Comparator.comparingDouble(o -> (o.getLocation().distance(block.getLocation()))));
 			for (final Block trunkBlock : trunkBlocksList) {
-				Bukkit.getScheduler().runTask(MineTinker.getPlugin(), () -> {
+				Bukkit.getScheduler().runTask(this.getSource(), () -> {
 					events.put(trunkBlock.getLocation(), 0);
 					try {
 						DataHandler.playerBreakBlock(player, trunkBlock, tool);
@@ -149,6 +154,12 @@ public class Timber extends Modifier implements Listener {
 					}
 				});
 			}
+
+			Bukkit.getScheduler().runTask(this.getSource(), () -> {
+				//Track stats
+				final int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
+				DataHandler.setTag(tool, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
+			});
 
 			// Place sapling on all ground blocks if applicable
 			if (saplingType == null || level < 2 || groundBlocks.isEmpty()) return;
@@ -160,7 +171,7 @@ public class Timber extends Modifier implements Listener {
 			}));
 
 			// try to place saplings on all ground blocks
-			Bukkit.getScheduler().runTask(MineTinker.getPlugin(), () -> {
+			Bukkit.getScheduler().runTask(this.getSource(), () -> {
 				for (final Block groundBlock : groundBlocks) {
 					for (final ItemStack stack : player.getInventory().getContents()) {
 						if (stack == null) continue;
@@ -220,5 +231,14 @@ public class Timber extends Modifier implements Listener {
 		}
 
 		return hasGround && hasLeaves;
+	}
+
+	@Override
+	public List<String> getStatistics(ItemStack item) {
+		List<String> lore = new ArrayList<>();
+		int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
+		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Timber.Statistic_Used")
+				.replaceAll("%amount", String.valueOf(stat)));
+		return lore;
 	}
 }

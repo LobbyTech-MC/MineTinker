@@ -73,6 +73,7 @@ public class Directing extends Modifier implements Listener {
 		config.addDefault("MinimumLevelToGetXP", 1); //Modifier-Level to give Player XP
 		config.addDefault("WorkInPVP", true);
 		config.addDefault("Color", "%GRAY%");
+		config.addDefault("ModifierItemMaterial", Material.COMPASS.name());
 
 		config.addDefault("EnchantCost", 10);
 		config.addDefault("Enchantable", false);
@@ -93,7 +94,7 @@ public class Directing extends Modifier implements Listener {
 		ConfigurationManager.saveConfig(config);
 		ConfigurationManager.loadConfig("Modifiers" + File.separator, getFileName());
 
-		init(Material.COMPASS);
+		init();
 
 		this.workInPVP = config.getBoolean("WorkInPVP", true);
 		this.workOnXP = config.getBoolean("WorksOnXP", true);
@@ -130,9 +131,7 @@ public class Directing extends Modifier implements Listener {
 		final Iterator<Item> itemIterator = event.getItems().iterator();
 
 		//Track stats
-		int stat = (DataHandler.hasTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
+		int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 
 		while (itemIterator.hasNext()) {
 			final Item item = itemIterator.next();
@@ -170,9 +169,7 @@ public class Directing extends Modifier implements Listener {
 		if (!modManager.hasMod(tool, this)) return;
 
 		//Track stats
-		int stat = (DataHandler.hasTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(tool, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
+		int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 
 		for (ItemStack current : new ArrayList<>(event.getEvent().getDrops())) {
 			if (modManager.hasMod(current, Soulbound.instance()) && event.getEvent().getEntity() instanceof Player)
@@ -192,7 +189,7 @@ public class Directing extends Modifier implements Listener {
 				"Entity(" + event.getEvent().getEntity().getType() + ")");
 
 		if (this.workOnXP && modManager.getModLevel(tool, this) >= this.minimumLevelForXP) {
-			//Spawn Experience Orb as adding it directly to the player would prevent Mending from working
+			// Spawn Experience Orb as adding it directly to the player would prevent Mending from working
 			if (event.getEvent().getDroppedExp() <= 0) return;
 			ExperienceOrb orb = (ExperienceOrb) player.getWorld().spawnEntity(player.getLocation(), EntityType.EXPERIENCE_ORB);
 			orb.setExperience(orb.getExperience() + event.getEvent().getDroppedExp());
@@ -202,11 +199,9 @@ public class Directing extends Modifier implements Listener {
 
 	@Override
 	public List<String> getStatistics(ItemStack item) {
-		//Track stats
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
-		List<String> lore = new ArrayList<>();
+		// Get stats
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Directing.Statistic_Used")
 				.replaceAll("%amount", String.valueOf(stat)));
 		return lore;

@@ -65,6 +65,7 @@ public class Berserk extends Modifier implements Listener {
 		config.addDefault("Color", "%DARK_RED%");
 		config.addDefault("MaxLevel", 3);
 		config.addDefault("SlotCost", 1);
+		config.addDefault("ModifierItemMaterial", Material.REDSTONE.name());
 		config.addDefault("BoostTimeInTicks", 200);
 		config.addDefault("TriggerPercent", 20);
 
@@ -89,7 +90,7 @@ public class Berserk extends Modifier implements Listener {
 		this.boostTime = config.getInt("BoostTimeInTicks");
 		this.trigger = config.getInt("TriggerPercent");
 
-		init(Material.REDSTONE);
+		init();
 
 		this.description = this.description
 				.replace("%duration", String.valueOf(this.boostTime / 20))
@@ -120,20 +121,16 @@ public class Berserk extends Modifier implements Listener {
 			ChatWriter.logModifier(player, event, this, chest,
 					"Time(" + boostTime + ")", "Amplifier(" + (modifierLevel - 1) + ")");
 
-			//Track stats
-			int stat = (DataHandler.hasTag(chest, getKey() + "_stat_used", PersistentDataType.INTEGER))
-					? DataHandler.getTag(chest, getKey() + "_stat_used", PersistentDataType.INTEGER)
-					: 0;
+			// Track stats
+			final int stat = DataHandler.getTagOrDefault(chest, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 			DataHandler.setTag(chest, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
 		}
 	}
 	@Override
 	public List<String> getStatistics(ItemStack item) {
-		//Track stats
-		int stat = (DataHandler.hasTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER))
-				? DataHandler.getTag(item, getKey() + "_stat_used", PersistentDataType.INTEGER)
-				: 0;
-		List<String> lore = new ArrayList<>();
+		// Get stats
+		final List<String> lore = new ArrayList<>();
+		final int stat = DataHandler.getTagOrDefault(item, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Berserk.Statistic_Used")
 				.replaceAll("%amount", String.valueOf(stat)));
 		return lore;

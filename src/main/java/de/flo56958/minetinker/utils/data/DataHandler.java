@@ -57,9 +57,9 @@ public class DataHandler {
      * @param <Z> The type of the value of the Tag
      */
 	public static <T, Z> boolean hasTag(@NotNull ItemStack item, @NotNull String key, PersistentDataType<T, Z> dataType, boolean useMinecraft) {
-		ItemMeta meta = item.getItemMeta();
+		final ItemMeta meta = item.getItemMeta();
 		if (meta == null) return false;
-		PersistentDataContainer container = meta.getPersistentDataContainer();
+		final PersistentDataContainer container = meta.getPersistentDataContainer();
 
 		return container.has((useMinecraft ? NamespacedKey.minecraft(key) : new NamespacedKey(MineTinker.getPlugin(), key)), dataType);
 	}
@@ -88,12 +88,27 @@ public class DataHandler {
 	 * @param <Z> The type of the value of the Tag
 	 */
 	public static <T, Z> void setTag(@NotNull ItemStack item, @NotNull String key, Z value, PersistentDataType<T, Z> dataType, boolean useMinecraft) {
-		ItemMeta meta = item.getItemMeta();
+		final ItemMeta meta = item.getItemMeta();
 		if (meta == null) return;
 
-		PersistentDataContainer container = meta.getPersistentDataContainer();
+		final PersistentDataContainer container = meta.getPersistentDataContainer();
 		container.set((useMinecraft ? NamespacedKey.minecraft(key) : new NamespacedKey(MineTinker.getPlugin(), key)), dataType, value);
 		item.setItemMeta(meta);
+	}
+
+	/**
+	 * Gets a Tag with the given key and the given dataType.
+	 * @param item The ItemStack to get the Tag from
+	 * @param key The key of the Tag
+	 * @param dataType The dataType of the Tag
+	 * @param defaultValue The value to return if the ItemStack does not have a Tag with the given key and the given dataType
+	 * @return The value of the Tag or defaultValue if the ItemStack does not have a Tag with the given key and the given dataType
+	 * @param <T> The type of the Tag
+	 * @param <Z> The type of the value of the Tag
+	 */
+	public static <T, Z> @NotNull Z getTagOrDefault(@NotNull ItemStack item, @NotNull String key, PersistentDataType<T, Z> dataType, @NotNull Z defaultValue) {
+		final Z value = getTag(item, key, dataType, false);
+		return value != null ? value : defaultValue;
 	}
 
 	/**
@@ -109,7 +124,6 @@ public class DataHandler {
 		return getTag(item, key, dataType, false);
 	}
 
-
 	/**
 	 * Gets a Tag with the given key and the given dataType.
 	 * @param item The ItemStack to get the Tag from
@@ -121,10 +135,10 @@ public class DataHandler {
 	 * @param <Z> The type of the value of the Tag
 	 */
 	public static <T, Z> @Nullable Z getTag(@NotNull ItemStack item, @NotNull String key, PersistentDataType<T, Z> dataType, boolean useMinecraft) {
-		ItemMeta meta = item.getItemMeta();
+		final ItemMeta meta = item.getItemMeta();
 		if (meta == null) return null;
 
-		PersistentDataContainer container = meta.getPersistentDataContainer();
+		final PersistentDataContainer container = meta.getPersistentDataContainer();
 		return container.get((useMinecraft ? NamespacedKey.minecraft(key) : new NamespacedKey(MineTinker.getPlugin(), key)), dataType);
 	}
 
@@ -150,6 +164,27 @@ public class DataHandler {
 		
 		container.remove((useMinecraft ? NamespacedKey.minecraft(key) : new NamespacedKey(MineTinker.getPlugin(), key)));
 		item.setItemMeta(meta);
+	}
+
+	public static boolean triggerItemDamage(@NotNull Player player, @NotNull ItemStack itemStack, int damage) {
+		ItemMeta meta = itemStack.getItemMeta();
+		if (meta == null) return true;
+        if (meta.isUnbreakable()) return true;
+
+        //Call damage event
+        final PlayerItemDamageEvent damageEvent = new PlayerItemDamageEvent(player, itemStack, damage);
+        Bukkit.getPluginManager().callEvent(damageEvent);
+        if (damageEvent.isCancelled()) return false;
+
+		meta = itemStack.getItemMeta();
+		if (meta instanceof Damageable damageable) {
+			if (damageable.getDamage() + damageEvent.getDamage() >= itemStack.getType().getMaxDurability())
+				return false;
+
+			damageable.setDamage(damageable.getDamage() + damageEvent.getDamage());
+			itemStack.setItemMeta(meta);
+		}
+        return true;
 	}
 
 	/**
@@ -266,14 +301,7 @@ public class DataHandler {
 							damage = 0;
 						}
 
-						//Call damage event
-						PlayerItemDamageEvent damageEvent = new PlayerItemDamageEvent(player, itemStack, damage);
-						Bukkit.getPluginManager().callEvent(damageEvent);
-						if (!damageEvent.isCancelled()) {
-							meta = itemStack.getItemMeta();
-							((Damageable) meta).setDamage(((Damageable) meta).getDamage() + damageEvent.getDamage());
-							itemStack.setItemMeta(meta);
-						}
+						triggerItemDamage(player, itemStack, damage);
 					}
 				}
 			}
