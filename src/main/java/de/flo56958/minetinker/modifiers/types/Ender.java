@@ -5,11 +5,13 @@ import de.flo56958.minetinker.api.events.MTEntityDamageByEntityEvent;
 import de.flo56958.minetinker.api.events.MTProjectileHitEvent;
 import de.flo56958.minetinker.api.events.MTProjectileLaunchEvent;
 import de.flo56958.minetinker.data.ToolType;
-import de.flo56958.minetinker.modifiers.Modifier;
+import de.flo56958.minetinker.modifiers.PlayerConfigurableModifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
 import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.data.DataHandler;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationOption;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
@@ -28,7 +30,7 @@ import org.bukkit.util.Vector;
 import java.io.File;
 import java.util.*;
 
-public class Ender extends Modifier implements Listener {
+public class Ender extends PlayerConfigurableModifier implements Listener {
 
 	private static Ender instance;
 	private boolean hasSound;
@@ -36,7 +38,6 @@ public class Ender extends Modifier implements Listener {
 	private boolean giveNauseaOnUse;
 	private int nauseaDuration;
 	private boolean giveBlindnessOnUse;
-	private boolean requireSneaking;
 	private int blindnessDuration;
 
 	private Ender() {
@@ -107,7 +108,6 @@ public class Ender extends Modifier implements Listener {
 		this.nauseaDuration = config.getInt("NauseaDuration", 5) * 20;
 		this.giveBlindnessOnUse = config.getBoolean("GiveBlindnessOnUse", true);
 		this.blindnessDuration = config.getInt("BlindnessDuration", 3) * 20;
-		this.requireSneaking = config.getBoolean("RequireSneaking", true);
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -119,7 +119,7 @@ public class Ender extends Modifier implements Listener {
 		ItemStack tool = event.getBow();
 		if (!player.hasPermission(getUsePermission())) return;
 		if (!modManager.hasMod(tool, this)) return;
-		if (this.requireSneaking && !player.isSneaking()) return;
+		if (PlayerConfigurationManager.getInstance().getBoolean(player, REQUIRE_SNEAKING) && !player.isSneaking()) return;
 
 		arrow.setMetadata(this.getKey(),
 				new FixedMetadataValue(this.getSource(), 0));
@@ -136,7 +136,7 @@ public class Ender extends Modifier implements Listener {
 
 		if (!player.hasPermission(getUsePermission())) return;
 		if (!modManager.hasMod(tool, this)) return;
-		if (this.requireSneaking && !player.isSneaking()) return;
+		if (PlayerConfigurationManager.getInstance().getBoolean(player, REQUIRE_SNEAKING) && !player.isSneaking()) return;
 
 		trident.setMetadata(this.getKey(),
 				new FixedMetadataValue(this.getSource(), 0));
@@ -176,8 +176,8 @@ public class Ender extends Modifier implements Listener {
 		spawnParticles(player, oldLoc);
 
 		if (this.giveNauseaOnUse) {
-			player.removePotionEffect(PotionEffectType.CONFUSION);
-			player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, this.nauseaDuration, 0, false, false));
+			player.removePotionEffect(PotionEffectType.NAUSEA);
+			player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, this.nauseaDuration, 0, false, false));
 		}
 		if (this.giveBlindnessOnUse) {
 			player.removePotionEffect(PotionEffectType.BLINDNESS);
@@ -246,12 +246,12 @@ public class Ender extends Modifier implements Listener {
 		}
 
 		if (this.giveNauseaOnUse) {
-			player.removePotionEffect(PotionEffectType.CONFUSION);
-			player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, this.nauseaDuration, 0, false, false));
+			player.removePotionEffect(PotionEffectType.NAUSEA);
+			player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, this.nauseaDuration, 0, false, false));
 
 			if (entity instanceof LivingEntity) {
-				((LivingEntity) entity).removePotionEffect(PotionEffectType.CONFUSION);
-				((LivingEntity) entity).addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, this.nauseaDuration, 0, false, false));
+				((LivingEntity) entity).removePotionEffect(PotionEffectType.NAUSEA);
+				((LivingEntity) entity).addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, this.nauseaDuration, 0, false, false));
 			}
 		}
 
@@ -259,9 +259,9 @@ public class Ender extends Modifier implements Listener {
 			player.removePotionEffect(PotionEffectType.BLINDNESS);
 			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, this.blindnessDuration, 0, false, false));
 
-			if (entity instanceof LivingEntity) {
-				((LivingEntity) entity).removePotionEffect(PotionEffectType.BLINDNESS);
-				((LivingEntity) entity).addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, this.blindnessDuration, 0, false, false));
+			if (entity instanceof LivingEntity livent) {
+				livent.removePotionEffect(PotionEffectType.BLINDNESS);
+				livent.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, this.blindnessDuration, 0, false, false));
 			}
 		}
 
@@ -303,5 +303,14 @@ public class Ender extends Modifier implements Listener {
 			cloud2.setColor(Color.GREEN);
 			cloud2.getLocation().setPitch(90);
 		}
+	}
+
+	private final PlayerConfigurationOption REQUIRE_SNEAKING =
+			new PlayerConfigurationOption(this, "require-sneaking", PlayerConfigurationOption.Type.BOOLEAN,
+					LanguageManager.getString("Modifier.Ender.PCO_require_sneaking"), true);
+
+	@Override
+	public List<PlayerConfigurationOption> getPCIOptions() {
+		return List.of(REQUIRE_SNEAKING);
 	}
 }

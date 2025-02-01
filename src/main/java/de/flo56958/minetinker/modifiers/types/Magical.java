@@ -7,11 +7,8 @@ import de.flo56958.minetinker.data.ToolType;
 import de.flo56958.minetinker.modifiers.Modifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
-import de.flo56958.minetinker.utils.PlayerInfo;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
+import de.flo56958.minetinker.utils.LanguageManager;
+import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.AbstractArrow;
 import org.bukkit.entity.Arrow;
@@ -123,8 +120,13 @@ public class Magical extends Modifier implements Listener {
 		if (modLevel <= 0) return;
 
 		if (player.getGameMode() != GameMode.CREATIVE) {
-			if (PlayerInfo.getPlayerExp(player) < this.experienceCost) {
+			if (player.getTotalExperience() <= this.experienceCost) {
+				if (arrow.getPickupStatus() != AbstractArrow.PickupStatus.CREATIVE_ONLY) {
+					// return arrow to player
+					player.getInventory().addItem(arrow.getItem());
+				}
 				event.setCancelled(true);
+				ChatWriter.sendActionBar(player, ChatColor.RED + LanguageManager.getString("Modifier.Magical.NotEnoughXP", player));
 				return;
 			}
 
@@ -162,7 +164,7 @@ public class Magical extends Modifier implements Listener {
 		double newDamage = oldDamage * Math.pow(this.multiplierDamagePerLevel, modLevel);
 		event.getEvent().setDamage(newDamage);
 		ChatWriter.logModifier(event.getPlayer(), event, this, event.getTool(),
-				String.format("Damage(%.2f -> %.2f [%.4f])", oldDamage, newDamage, newDamage/oldDamage));
+				String.format("Damage(%.2f -> %.2f [%.4f])", oldDamage, newDamage, newDamage / oldDamage));
 		if (this.hasKnockback) event.getEntity().setVelocity(arrow.getVelocity().normalize().multiply(modLevel));
 	}
 }

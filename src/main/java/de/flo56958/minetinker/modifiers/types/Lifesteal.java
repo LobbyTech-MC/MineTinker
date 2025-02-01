@@ -46,7 +46,7 @@ public class Lifesteal extends Modifier implements Listener {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-		return Arrays.asList(ToolType.AXE, ToolType.BOW, ToolType.CROSSBOW, ToolType.SWORD, ToolType.TRIDENT);
+		return Arrays.asList(ToolType.AXE, ToolType.BOW, ToolType.CROSSBOW, ToolType.SWORD, ToolType.TRIDENT, ToolType.MACE);
 	}
 
 	@Override
@@ -113,12 +113,12 @@ public class Lifesteal extends Modifier implements Listener {
 		final double recovery = damage * ((percentPerLevel * level) / 100.0);
 		final double health = player.getHealth() + recovery;
 
-		AttributeInstance attribute = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+		AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
 
 		if (attribute != null) // for IllegalArgumentException if Health is bigger than MaxHealth
 			player.setHealth(Math.min(health, attribute.getValue()));
 
 		ChatWriter.logModifier(player, event, this, tool, String.format("Chance(%d/%d)", n, this.percentToTrigger),
-				String.format("HealthGain(%.2f [%.2f/%.2f = %.4f])", recovery, recovery, damage, recovery/damage));
+				String.format("HealthGain(%.2f [%.2f/%.2f = %.4f])", recovery, recovery, damage, recovery / damage));
 	}
 }

@@ -28,6 +28,7 @@ public class Sunblazer extends Modifier implements Listener {
 
 	private static Sunblazer instance;
 	private double damageMultiplierPerLevel;
+
 	private Sunblazer() {
 		super(MineTinker.getPlugin());
 		customModelData = 10_050;
@@ -50,7 +51,7 @@ public class Sunblazer extends Modifier implements Listener {
 	@Override
 	public List<ToolType> getAllowedTools() {
 		return Arrays.asList(ToolType.SWORD, ToolType.AXE, ToolType.TRIDENT, ToolType.ELYTRA, ToolType.BOOTS,
-				ToolType.CHESTPLATE, ToolType.CROSSBOW, ToolType.BOW, ToolType.HELMET, ToolType.LEGGINGS);
+				ToolType.CHESTPLATE, ToolType.CROSSBOW, ToolType.BOW, ToolType.HELMET, ToolType.LEGGINGS, ToolType.MACE);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package de.flo56958.minetinker.utils;
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.data.Lists;
 import de.flo56958.minetinker.modifiers.ModManager;
+import de.flo56958.minetinker.utils.data.DataHandler;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -49,38 +50,38 @@ public class PlayerInfo implements Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	private void onFish(@NotNull final PlayerFishEvent event) {
-		switch (event.getState()) {
-			case FISHING:
-				if (event.getHand() == null) return;
-				fishingRodTracker.put(event.getPlayer().getUniqueId(),
-						event.getPlayer().getInventory().getItem(event.getHand()));
-				break;
-			case CAUGHT_FISH:
-				final Player player = event.getPlayer();
-				if (Lists.WORLDS.contains(player.getWorld().getName())) return;
+		final Player player = event.getPlayer();
+		if (Lists.WORLDS.contains(player.getWorld().getName())) return;
 
+		switch (event.getState()) {
+			case FISHING -> {
+				if (event.getHand() == null) return;
+				final ItemStack rod = player.getInventory().getItem(event.getHand());
+				if (!modManager.isToolViable(rod)) return;
+				fishingRodTracker.put(player.getUniqueId(), rod);
+			}
+			case CAUGHT_FISH -> {
 				// event.getHand() is null in State.CAUGHT_FISH
 				// looking for fishing rod
-				ItemStack rod = fishingRodTracker.get(player.getUniqueId());
-				if (!modManager.isToolViable(rod)) return;
-				// rod needs to be updated if the slot changed because of a hand swap
-				for (final ItemStack item : new ItemStack[]{player.getInventory().getItemInMainHand(),
-						player.getInventory().getItemInOffHand()}) {
-					if (rod.equals(item)) {
-						rod = item;
-						break;
+				ItemStack rod = fishingRodTracker.remove(player.getUniqueId());
+				if (event.getHand() == null) {
+					// rod needs to be updated if the slot changed because of a hand swap
+					for (final ItemStack item : new ItemStack[]{player.getInventory().getItemInMainHand(),
+							player.getInventory().getItemInOffHand()}) {
+						if (rod.equals(item)) {
+							rod = item;
+							break;
+						}
 					}
+				} else {
+					rod = player.getInventory().getItem(event.getHand());
 				}
+				if (!modManager.isToolViable(rod)) return;
 
 				modManager.addExp(player, rod, event.getExpToDrop(), true);
-			case CAUGHT_ENTITY:
-			case IN_GROUND:
-			case FAILED_ATTEMPT:
-			case REEL_IN:
-			default:
-				fishingRodTracker.remove(event.getPlayer().getUniqueId());
-				break;
-        }
+			}
+			default -> {}
+		}
 	}
 
 	private void setCombatTag(@Nullable final Entity entity) {
@@ -120,6 +121,17 @@ public class PlayerInfo implements Listener {
 		combatTagTimeTracker.remove(event.getPlayer().getUniqueId());
 
 		fishingRodTracker.remove(event.getPlayer().getUniqueId());
+
+		DataHandler.removeLastSound(event.getPlayer());
+	}
+
+	public static int getEmptyInventorySlots(final Player player) {
+		int counter = 0;
+		for (final ItemStack stack : player.getInventory().getStorageContents()) {
+			if (stack == null || stack.getType().isAir())
+				counter++;
+		}
+		return counter;
 	}
 
 	/**
@@ -136,51 +148,35 @@ public class PlayerInfo implements Listener {
 		return getDirection(rot);
 	}
 
-	/**
-	 * @param rot The rotation in degrees
-	 * @return The compass facing direction
-	 */
-	private @Nullable static Direction getDirection(final double rot) {
-        return switch ((int) (rot / 45)) {
-            case 0, 7 -> Direction.WEST;
-            case 1, 2 -> Direction.NORTH;
-            case 3, 4 -> Direction.EAST;
-            case 5, 6 -> Direction.SOUTH;
-            default -> null;
-        };
+	// Calculate total experience up to a level
+	private static int getExpAtLevel(int level) {
+		if (level <= 16) {
+			return (int) (Math.pow(level, 2) + 6 * level);
+		} else if (level <= 31) {
+			return (int) (2.5 * Math.pow(level, 2) - 40.5 * level + 360.0);
+		} else {
+			return (int) (4.5 * Math.pow(level, 2) - 162.5 * level + 2220.0);
+		}
 	}
 
 	// Calculate amount of EXP needed to level up
-	private static int getExpToLevelUp(final int level) {
-		return switch (level) {
-			case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ->
-					2 * level + 7;
-			case 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 ->
-					5 * level - 38;
-			default ->
-					9 * level - 158;
-		};
-	}
-
-	// Calculate total experience up to a level
-	private static int getExpAtLevel(final int level) {
-    	return switch (level) {
-    	    case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ->
-					(int) (Math.pow(level, 2) + 6 * level);
-    	    case 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ->
-    	            (int) (2.5 * Math.pow(level, 2) - 40.5 * level + 360.0);
-    	    default ->
-					(int) (4.5 * Math.pow(level, 2) - 162.5 * level + 2220.0);
-    	};
+	private static int getExpToLevelUp(int level) {
+		if (level <= 15) {
+			return 2 * level + 7;
+		} else if (level <= 30) {
+			return 5 * level - 38;
+		} else {
+			return 9 * level - 158;
+		}
 	}
 
 	/**
 	 * @param player The player
 	 * @return the players current total exp amount
 	 */
-	public static int getPlayerExp(@NotNull final Player player) {
+	public static int getPlayerExp(@NotNull Player player) {
 		int exp = 0;
-		final int level = player.getLevel();
+		int level = player.getLevel();
 
 		// Get the amount of XP in past levels
 		exp += getExpAtLevel(level);
@@ -189,6 +185,21 @@ public class PlayerInfo implements Listener {
 		exp += Math.round(getExpToLevelUp(level) * player.getExp());
 
 		return exp;
+	}
+
+	/**
+	 * @param rot The rotation in degrees
+	 * @return The compass facing direction
+	 */
+	private @Nullable
+	static Direction getDirection(final double rot) {
+		return switch ((int) (rot / 45)) {
+			case 0, 7 -> Direction.WEST;
+			case 1, 2 -> Direction.NORTH;
+			case 3, 4 -> Direction.EAST;
+			case 5, 6 -> Direction.SOUTH;
+			default -> null;
+		};
 	}
 
 	public enum Direction {

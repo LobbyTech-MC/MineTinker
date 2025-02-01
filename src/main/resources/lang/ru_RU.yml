@@ -6,21 +6,10 @@ Alert.OnCooldown: "%RED%Способность ещё не готова!"
 Alert.MinecraftAPI: "%RED%Невозможно подключится к Minecraft API!"
 
 StartUp.Commands: "Команды зарегистрированы!"
-StartUp.BuildersWands: "Посохи Строителя включены!"
-StartUp.EasyHarvest: "EasyHarvest включён!"
 StartUp.Events: "События зарегистрированы!"
 StartUp.GUIs: "Загрузка GUIs!"
 StartUp.StdLogging: "Standard Logging включён. Вы можете выключить его в конфиге под  Logging.Standard!"
 StartUp.DebugLogging: "Debug Logging включён. Лучше отключить его в конфиге под  Logging.Debug!"
-
-Builderswand.Name.Wood: "Деревянный Посох Строителя"
-Builderswand.Name.Stone: "Каменный Посох Строителя"
-Builderswand.Name.Iron: "Железный Посох Строителя"
-Builderswand.Name.Gold: "Золотой Посох Строителя"
-Builderswand.Name.Diamond: "Алмазный Посох Строителя"
-Builderswand.Name.Netherite: "Незеритовый Посох Строителя"
-Builderswand.Description: "%WHITE%MineTinker-Посох-Строителя"
-Builderswand.Error: "Не удалось найти рецепт для %wand!"
 
 Commands.Info.Line1: "MineTinker (%ver) автор плагина Flo56958. Перевод на русский Timotei~."
 Commands.Info.Line2: "За основу плагина взяты различные моды (например, TinkersConstruct)"
@@ -31,7 +20,6 @@ Commands.Reload.Note1: "Внимание: плагин может работат
 Commands.Reload.Recipes: "Очистка Рецептов!"
 Commands.Reload.Configs: "Перезагрузка Конфигурации!"
 Commands.Reload.ModManager: "Перезагрузка Менеджера Модов!"
-Commands.Reload.Builderswands: "Перезагрузка Посохов Строителя!"
 Commands.Reload.GUIs: "Перезагрузка GUIs!"
 Commands.Reload.Finish: "Перезагрузка выполнена!"
 Commands.ModList: "Возможные модификаторы:"
@@ -209,13 +197,11 @@ Modifier:
     DescriptionModifierItem: "Модификатор Уклонения"
   Experienced:
     Name: "Опыт"
-    Description: "Инструмент имеет %chance% шанс выронить %amount опыта при использовании"
     ModifierItemName: " Эссенция Опыта"
     DescriptionModifierItem: "Модификатор Эссенции Опыта"
     Statistic_Amount: "Опыта выпадает: %amount"
   Extra-Modifier:
     Name: "Дополнительный-Модификатор"
-    Description: "Добавляет %amount инструменту дополнительные слоты для модификаторов!"
     ModifierItemName: "Совершенная Звезда Ада"
     DescriptionModifierItem: "Дополнительный модификатор"
   Fiery:
@@ -250,7 +236,6 @@ Modifier:
     DescriptionModifierItem: "Модификатор Самонаведения"
   Infinity:
     Name: "Бесконечность"
-    Description: "Стрелы не расходуются при стрельбе, а Трезубец возвращается к Вам!"
     ModifierItemName: "Зачарованная Стрела"
     DescriptionModifierItem: "Модификатор Бесконечности"
   Insulating:
@@ -285,7 +270,6 @@ Modifier:
     DescriptionModifierItem: "Модификатор Удачи"
   Magical:
     Name: "Магия"
-    Description: "Стреляет магической сферой, которая не подвластна гравитации, но летит на %amount% медленнее! При попадании наносит от %min% до %max% больше урона (в зависимости от уровня)! Стоит %xp опыта за выстрел!"
     ModifierItemName: "Магическая Стрела"
     DescriptionModifierItem: "Модификатор Магии"
   Melting:
@@ -295,7 +279,6 @@ Modifier:
     DescriptionModifierItem: "Модификатор Плавильни"
   Multishot:
     Name: "Мультивыстрел"
-    Description: "За каждый уровень стреляет дополнительной стрелой!"
     ModifierItemName: "Мультистрела"
     DescriptionModifierItem: "Модификатор Мультивыстрела"
   Multijump:
@@ -352,7 +335,6 @@ Modifier:
     DescriptionModifierItem: "Предмет-модификатор Ночного зрения"
   Shadow-Dive:
     Name: "Теневое погружение"
-    Description: "Полностью исчезните из поля зрения пока приседаете в темноте! (Уровень света <= %level)"
     ModifierItemName: "Кристалл исчезновения"
     DescriptionModifierItem: "Предмет-модификатор Теневого погружения"
     LightToHigh: "Уровень света слишком высокий!"
@@ -444,7 +426,6 @@ Modifier:
     DescriptionModifierItem: "Модификатор Нежити"
   Vigilant:
     Name: "Бдительность"
-    Description: "Получение временного щита, равного %amount от полученного урона. Щит длится %duration секунд за уровень!"
     ModifierItemName: "Запретный плод"
     DescriptionModifierItem: "Модификатор бдительности"
   Void-Netting:

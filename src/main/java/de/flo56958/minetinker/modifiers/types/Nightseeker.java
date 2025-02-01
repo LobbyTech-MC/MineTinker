@@ -28,6 +28,7 @@ public class Nightseeker extends Modifier implements Listener {
 
 	private static Nightseeker instance;
 	private double damageMultiplierPerLevel;
+
 	private Nightseeker() {
 		super(MineTinker.getPlugin());
 		customModelData = 10_051;
@@ -49,7 +50,7 @@ public class Nightseeker extends Modifier implements Listener {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-		return Arrays.asList(ToolType.SWORD, ToolType.AXE, ToolType.TRIDENT, ToolType.ELYTRA, ToolType.BOOTS, ToolType.CHESTPLATE, ToolType.CROSSBOW, ToolType.BOW, ToolType.HELMET, ToolType.LEGGINGS);
+		return Arrays.asList(ToolType.SWORD, ToolType.AXE, ToolType.TRIDENT, ToolType.ELYTRA, ToolType.BOOTS, ToolType.CHESTPLATE, ToolType.CROSSBOW, ToolType.BOW, ToolType.HELMET, ToolType.LEGGINGS, ToolType.MACE);
 	}
 
 	@Override

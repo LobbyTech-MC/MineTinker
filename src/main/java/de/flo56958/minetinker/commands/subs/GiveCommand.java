@@ -4,8 +4,6 @@ import de.flo56958.minetinker.api.SubCommand;
 import de.flo56958.minetinker.commands.ArgumentType;
 import de.flo56958.minetinker.commands.CommandManager;
 import de.flo56958.minetinker.data.ToolType;
-import de.flo56958.minetinker.listeners.BuildersWandListener;
-import de.flo56958.minetinker.utils.ConfigurationManager;
 import de.flo56958.minetinker.utils.LanguageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -21,11 +19,11 @@ import java.util.*;
 
 /**
  * Syntax of /mt give:
- * 		/mt give {Player} [Material]
+ * /mt give {Player} [Material]
  * <p>
  * Legend:
- * 		{ }: not necessary
- * 		[ ]: necessary
+ * { }: not necessary
+ * [ ]: necessary
  */
 public class GiveCommand implements SubCommand {
 
@@ -54,17 +52,6 @@ public class GiveCommand implements SubCommand {
 		}
 
 		if (material == null) {
-			if (ConfigurationManager.getConfig("BuildersWand.yml").getBoolean("enabled")) {
-				String name = args[1].replaceAll("_", " ");
-				for (final ItemStack stack : BuildersWandListener.getWands()) {
-					if (stack.getItemMeta().getDisplayName().equalsIgnoreCase(name)) {
-						if (!player.getInventory().addItem(stack.clone()).isEmpty()) { //adds items to (full) inventory
-							player.getWorld().dropItem(player.getLocation(), stack.clone());
-						} // no else as it gets added in if
-						return true;
-					}
-				}
-			}
 			CommandManager.sendError(sender, LanguageManager.getString("Commands.Failure.Cause.InvalidArguments", player));
 			return true;
 		}
@@ -92,39 +79,35 @@ public class GiveCommand implements SubCommand {
 					result.add("@p");
 					result.add("@rw");
 				}
+				// fall through
 			case 3:
 				// rewrite this
 				result.addAll(ToolType.ALL.getToolMaterials().stream().map(Material::toString).toList());
-				if (ConfigurationManager.getConfig("BuildersWand.yml").getBoolean("enabled")) {
-					for (final ItemStack wand : BuildersWandListener.getWands()) {
-						result.add(wand.getItemMeta().getDisplayName().replaceAll(" ", "_"));
-					}
-				}
 		}
 		return result;
 	}
 
 
-	@Override @NotNull
-	public String getName() {
+	@Override
+	public @NotNull String getName() {
 		return "give";
 	}
 
-	@Override @NotNull
-	public List<String> getAliases(boolean withName) {
+	@Override
+	public @NotNull List<String> getAliases(boolean withName) {
 		final ArrayList<String> aliases = new ArrayList<>();
 		if (withName) aliases.add(getName());
 		aliases.add("g");
 		return aliases;
 	}
 
-	@Override @NotNull
-	public String getPermission() {
+	@Override
+	public @NotNull String getPermission() {
 		return "minetinker.commands.give";
 	}
 
-	@Override @NotNull
-	public Map<Integer, List<ArgumentType>> getArgumentsToParse() {
+	@Override
+	public @NotNull Map<Integer, List<ArgumentType>> getArgumentsToParse() {
 		final Map<Integer, List<ArgumentType>> argumentsToParse = new HashMap<>();
 		argumentsToParse.put(1, Collections.singletonList(ArgumentType.PLAYER));
 		return argumentsToParse;

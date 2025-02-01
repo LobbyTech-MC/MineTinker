@@ -2,17 +2,15 @@ package de.flo56958.minetinker.modifiers.types;
 
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.MTBlockBreakEvent;
-import de.flo56958.minetinker.data.Lists;
 import de.flo56958.minetinker.data.ToolType;
-import de.flo56958.minetinker.modifiers.Modifier;
+import de.flo56958.minetinker.modifiers.PlayerConfigurableModifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
 import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.data.DataHandler;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationOption;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -25,12 +23,13 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Timber extends Modifier implements Listener {
+public class Timber extends PlayerConfigurableModifier implements Listener {
 
 	private static Timber instance;
 	private int maxBlocks;
@@ -85,7 +84,7 @@ public class Timber extends Modifier implements Listener {
 
 		Map<String, String> recipeMaterials = new HashMap<>();
 		StringBuilder mats = new StringBuilder();
-		Lists.getWoodWood().stream().map(Material::name).forEach(mat -> mats.append(mat).append(","));
+		Tag.LOGS.getValues().stream().map(Material::name).forEach(mat -> mats.append(mat).append(","));
 		recipeMaterials.put("L", mats.substring(0, mats.length() - 1));
 		recipeMaterials.put("E", Material.EMERALD.name());
 
@@ -101,12 +100,12 @@ public class Timber extends Modifier implements Listener {
 
 		this.grasses.clear();
 		this.grasses.addAll(Arrays.asList(Material.GRASS_BLOCK, Material.DIRT, Material.PODZOL, Material.COARSE_DIRT,
-				Material.NETHERRACK, Material.CRIMSON_NYLIUM, Material.WARPED_NYLIUM));
-		if (MineTinker.is19compatible)
-			this.grasses.add(Material.MUD);
+				Material.NETHERRACK, Material.CRIMSON_NYLIUM, Material.WARPED_NYLIUM, Material.MUD,
+				// world generation edge cases
+				Material.SAND, Material.RED_SAND, Material.GRAVEL));
 	}
 
-    @EventHandler(ignoreCancelled = true)
+	@EventHandler(ignoreCancelled = true)
 	public void effect(WorldSaveEvent e) {
 		if (Bukkit.getOnlinePlayers().isEmpty())
 			events.clear();
@@ -121,11 +120,10 @@ public class Timber extends Modifier implements Listener {
 		if (!modManager.hasMod(tool, this)) return;
 		if (!player.hasPermission(getUsePermission())) return;
 
-		final HashSet<Material> allowed = new HashSet<>();
-		allowed.addAll(Lists.getWoodLogs());
-		allowed.addAll(Lists.getWoodWood());
+		final HashSet<Material> allowed = new HashSet<>(Tag.LOGS.getValues());
+		allowed.add(Material.MANGROVE_ROOTS); // Not in the material tag
 
-		if (ToolType.SHEARS.contains(tool.getType()) && Lists.getWoodLeaves().contains(block.getType())) {
+		if (ToolType.SHEARS.contains(tool.getType()) && Tag.LEAVES.isTagged(block.getType())) {
 			allowed.clear();
 			allowed.add(block.getType());
 		}
@@ -134,16 +132,18 @@ public class Timber extends Modifier implements Listener {
 
 		final int level = modManager.getModLevel(tool, this);
 
-		final int sap_idx = block.getType().toString().lastIndexOf('_');
-		final Material saplingType = Material.getMaterial(block.getType().toString().substring(0, sap_idx) + "_SAPLING");
+		final String sap_mat = block.getType().toString().replace("STRIPPED_", "");
+		final int sap_idx = sap_mat.lastIndexOf('_');
+		final Material saplingType = Material.getMaterial(sap_mat.substring(0, sap_idx) + "_SAPLING");
 
 		Bukkit.getScheduler().runTaskAsynchronously(this.getSource(), () -> {
 			final HashSet<Block> trunkBlocks = new HashSet<>();
 			final ArrayList<Block> groundBlocks = new ArrayList<>();
-			if (!parseTree(block, trunkBlocks, groundBlocks, allowed) && !ToolType.SHEARS.contains(tool.getType())) return;
+			if (!parseTree(block, trunkBlocks, groundBlocks, allowed) && !ToolType.SHEARS.contains(tool.getType()))
+				return;
 			final List<Block> trunkBlocksList = new ArrayList<>(trunkBlocks);
 			// Sort blocks by distance to the original block (closest first) and break them in that order
-			trunkBlocksList.sort(Comparator.comparingDouble(o -> (o.getLocation().distance(block.getLocation()))));
+			trunkBlocksList.sort(Comparator.comparingDouble(o -> o.getLocation().distance(block.getLocation())));
 			for (final Block trunkBlock : trunkBlocksList) {
 				Bukkit.getScheduler().runTask(this.getSource(), () -> {
 					events.put(trunkBlock.getLocation(), 0);
@@ -162,7 +162,7 @@ public class Timber extends Modifier implements Listener {
 			});
 
 			// Place sapling on all ground blocks if applicable
-			if (saplingType == null || level < 2 || groundBlocks.isEmpty()) return;
+			if (saplingType == null || level < 2 || groundBlocks.isEmpty() || !PlayerConfigurationManager.getInstance().getBoolean(player, PLANT_SAMPLINGS)) return;
 			// sort ground blocks by distance to the original block (closest first)
 			groundBlocks.sort(Comparator.comparing(b -> {
 				final Location l = b.getLocation();
@@ -202,9 +202,9 @@ public class Timber extends Modifier implements Listener {
 	}
 
 	private boolean parseTree(@NotNull Block block,
-									 @NotNull final HashSet<Block> trunkBlocks, @NotNull final List<Block> groundBlocks,
-							  		 @NotNull final HashSet<Material> allowed) {
-		final Stack<Block> stack = new Stack<>();
+	                          @NotNull final Set<Block> trunkBlocks, @NotNull final List<Block> groundBlocks,
+	                          @NotNull @Unmodifiable final Set<Material> allowed) {
+		final ArrayDeque<Block> stack = new ArrayDeque<>();
 		boolean hasGround = false, hasLeaves = false;
 		stack.push(block);
 		while (trunkBlocks.size() < maxBlocks && !stack.isEmpty()) {
@@ -213,7 +213,7 @@ public class Timber extends Modifier implements Listener {
 				hasGround = true;
 				groundBlocks.add(block.getRelative(BlockFace.DOWN));
 			}
-			if (!hasLeaves && Lists.getWoodLeaves().contains(block.getRelative(BlockFace.UP).getType()))
+			if (!hasLeaves && Tag.LEAVES.isTagged(block.getRelative(BlockFace.UP).getType()))
 				hasLeaves = true;
 
 			for (int dx = -1; dx <= 1; dx++) {
@@ -240,5 +240,14 @@ public class Timber extends Modifier implements Listener {
 		lore.add(ChatColor.WHITE + LanguageManager.getString("Modifier.Timber.Statistic_Used")
 				.replaceAll("%amount", String.valueOf(stat)));
 		return lore;
+	}
+
+	private final PlayerConfigurationOption PLANT_SAMPLINGS =
+			new PlayerConfigurationOption(this, "plant-samplings", PlayerConfigurationOption.Type.BOOLEAN,
+			LanguageManager.getString("Modifier.Timber.PCO_plant_sapling"), true);
+
+	@Override
+	public List<PlayerConfigurationOption> getPCIOptions() {
+		return List.of(PLANT_SAMPLINGS);
 	}
 }

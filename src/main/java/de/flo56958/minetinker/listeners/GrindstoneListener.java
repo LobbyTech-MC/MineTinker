@@ -5,6 +5,7 @@ import de.flo56958.minetinker.modifiers.ModManager;
 import de.flo56958.minetinker.modifiers.Modifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.LanguageManager;
+import de.flo56958.minetinker.utils.PlayerInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -37,7 +38,7 @@ public class GrindstoneListener implements Listener {
 		int slots;
 	}
 
-	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onGrind(@NotNull final InventoryClickEvent event) {
 		final FileConfiguration config = MineTinker.getPlugin().getConfig();
 
@@ -52,9 +53,14 @@ public class GrindstoneListener implements Listener {
 				final ItemStack slot1 = grindstoneInventory.getItem(0);
 				final ItemStack slot2 = grindstoneInventory.getItem(1);
 
-				final GrindstoneSave gs = save.remove(player);
-				//Check for bugged state
-				if (gs == null || !gs.tool.equals(result)
+				final GrindstoneSave gs = save.get(player);
+
+				// check for invalid shift-click when inventory is full
+				if (event.isShiftClick() && PlayerInfo.getEmptyInventorySlots(player) < 1)
+					return;
+
+				// check for bugged state
+				if (gs == null || !gs.tool.equals(result) || (event.getCursor() != null && event.getCursor().getAmount() != 0)
 						|| (slot1 == null && slot2 == null) || (slot1 != null && !gs.tool.getType().equals(slot1.getType()))
 						|| (slot2 != null && !gs.tool.getType().equals(slot2.getType()))) {
 					event.setCancelled(true);
@@ -76,10 +82,24 @@ public class GrindstoneListener implements Listener {
 				}
 
 				for (final ItemStack stack : gs.itemStacks) {
-					if (!player.getInventory().addItem(stack).isEmpty()) { //adds items to (full) inventory
+					// do not fill up the inventory when shift-clicking
+					if ((event.isShiftClick() && PlayerInfo.getEmptyInventorySlots(player) <= 1)
+							// this drops the items even if the player would have a non-full stack for it
+							|| !player.getInventory().addItem(stack).isEmpty()) { //adds items to (full) inventory
 						player.getWorld().dropItem(player.getLocation(), stack);
 					} // no else as it gets added in if-clause
 				}
+
+				save.remove(player);
+
+				// Remove spawned exp orbs
+				Bukkit.getScheduler().runTaskLater(MineTinker.getPlugin(),
+						() -> player.getWorld().getEntitiesByClass(org.bukkit.entity.ExperienceOrb.class)
+								.forEach(orb -> {
+							if (orb.getLocation().distance(player.getLocation()) < 6.5) {
+								orb.setExperience(0);
+							}
+						}), 1);
 
 				return;
 			}
@@ -87,7 +107,7 @@ public class GrindstoneListener implements Listener {
 			// Avoid handling clicks outside the grindstone inventory
 			if (grindstoneInventory.equals(event.getClickedInventory()) == event.isShiftClick()) return;
 
-			final ItemStack item = (event.isShiftClick()) ? event.getCurrentItem() : event.getCursor();
+			final ItemStack item = event.isShiftClick() ? event.getCurrentItem() : event.getCursor();
 			//check for MT item
 			if (!modManager.isToolViable(item) && !modManager.isArmorViable(item)) return;
 
@@ -170,28 +190,30 @@ public class GrindstoneListener implements Listener {
 			Bukkit.getScheduler().runTaskLater(MineTinker.getPlugin(),
 					() -> grindstoneInventory.setItem( /*Resultslot*/ 2, result), 1);
 			save.put(player, gs);
-		} else {
-			// Avoid handling the clicks inside the inventory.
-			if (event.getSlotType() != InventoryType.SlotType.RESULT
-					&& event.getSlotType() != InventoryType.SlotType.CRAFTING)
-				return;
 
-			// Works fine even if the getItem method returns null.
-            final ItemStack slot1 = grindstoneInventory.getItem(0);
-            final ItemStack slot2 = grindstoneInventory.getItem(1);
+			return;
+		}
 
-            if (!(modManager.isToolViable(slot1) || modManager.isArmorViable(slot1)
-                    || modManager.isToolViable(slot2) || modManager.isArmorViable(slot2)))
-                return;
+		// Avoid handling the clicks inside the inventory.
+		if (event.getSlotType() != InventoryType.SlotType.RESULT
+				&& event.getSlotType() != InventoryType.SlotType.CRAFTING)
+			return;
 
-            if (event.getSlotType() != InventoryType.SlotType.RESULT) return;
+		// Works fine even if the getItem method returns null.
+		final ItemStack slot1 = grindstoneInventory.getItem(0);
+		final ItemStack slot2 = grindstoneInventory.getItem(1);
 
-            event.setResult(Event.Result.DENY);
-            event.setCancelled(true);
+		if (!(modManager.isToolViable(slot1) || modManager.isArmorViable(slot1)
+				|| modManager.isToolViable(slot2) || modManager.isArmorViable(slot2)))
+			return;
 
-            ChatWriter.sendActionBar(player, LanguageManager.getString("Alert.OnItemGrind", player));
-            if (config.getBoolean("Sound.OnFail"))
-                player.playSound(player.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1.0F, 2F);
-        }
+		if (event.getSlotType() != InventoryType.SlotType.RESULT) return;
+
+		event.setResult(Event.Result.DENY);
+		event.setCancelled(true);
+
+		ChatWriter.sendActionBar(player, LanguageManager.getString("Alert.OnItemGrind", player));
+		if (config.getBoolean("Sound.OnFail"))
+			player.playSound(player.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1.0F, 2F);
 	}
 }

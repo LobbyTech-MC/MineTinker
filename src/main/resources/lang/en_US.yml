@@ -6,21 +6,10 @@ Alert.OnCooldown: "%RED%This ability is still on cooldown!"
 Alert.MinecraftAPI: "%RED%Unable to connect to Minecrafts API!"
 
 StartUp.Commands: "Registered commands!"
-StartUp.BuildersWands: "Enabled Builderswands!"
-StartUp.EasyHarvest: "Enabled EasyHarvest!"
 StartUp.Events: "Registered Events!"
 StartUp.GUIs: "Loading GUIs!"
 StartUp.StdLogging: "Standard Logging is enabled. You can disable it in the config under Logging.Standard!"
 StartUp.DebugLogging: "Debug Logging is enabled. You should disable it in the config under Logging.Debug!"
-
-Builderswand.Name.Wood: "Wooden Builderswand"
-Builderswand.Name.Stone: "Stone Builderswand"
-Builderswand.Name.Iron: "Iron Builderswand"
-Builderswand.Name.Gold: "Golden Builderswand"
-Builderswand.Name.Diamond: "Diamond Builderswand"
-Builderswand.Name.Netherite: "Netherite Builderswand"
-Builderswand.Description: "%WHITE%MineTinker-Builderswand"
-Builderswand.Error: "Could not register recipe for the %wand!"
 
 Commands.Info.Line1: "MineTinker (%ver) is a Plugin made by Flo56958."
 Commands.Info.Line2: "It is inspired by different mods (e.g. TinkersConstruct)"
@@ -35,7 +24,6 @@ Commands.Reload.Note1: "NOTE: It is possible that the plugin will not work corre
 Commands.Reload.Recipes: "Clearing Recipes!"
 Commands.Reload.Configs: "Reloading Configurations!"
 Commands.Reload.ModManager: "Reloading ModManager!"
-Commands.Reload.Builderswands: "Reloading Builderswands!"
 Commands.Reload.GUIs: "Reloading GUIs!"
 Commands.Reload.Finish: "Done reloading!"
 Commands.ModList: "Possible Modifiers:"
@@ -132,6 +120,8 @@ ModifierFailCause.ToolLevelToLow: "Tool not enough leveled!"
 GrindStone.PossibleSlotsAfterGrind: "Possible free Slots after grind: %amount"
 
 ActionBar.ExpGain: "%amount exp gained!"
+PCO_ActionBar_Messages: "Allow actionbar messages from the plugin"
+PCO_ActionBar_ExpGain: "Show experience gain of items in the actionbar"
 
 LanguageManager.LoadedLanguage: "LanguageManager loaded %lang successfully!"
 
@@ -178,12 +168,27 @@ Modifier:
     ModifierItemName: "Bloody Redstone"
     DescriptionModifierItem: "Modifier-Item for the Berserk-Modifier"
     Statistic_Used: "Times activated: %amount"
+  Building:
+    Name: "Building"
+    Description: "Right-clicking a block places the same block next to it if you have it in your inventory!"
+    ModifierItemName: "Builder's Block"
+    DescriptionModifierItem: "Modifier-Item for the Building-Modifier"
+    PCO_solve_player_overlap: "Solve for player overlap when placing blocks"
   Channeling:
     Name: "Channeling"
     Description: "Summon lightning with a chance of %amount per level!"
     Description_OnlyStorms: "This only works during thunderstorms!"
     ModifierItemName: "Lightning Infused Shard"
     DescriptionModifierItem: "Modifier-Item for the Channeling-Modifier"
+  Cooldown:
+    PCO_off_cooldown_alert: "Send a sound alert when the modifier is off cooldown"
+    PCO_off_cooldown_note: "The note to play when the modifier is off cooldown (from 0 to 24)"
+    PCO_off_cooldown_instrument: "The instrument to play when the modifier is off cooldown (from 0 to 24)"
+  Dense:
+    Name: "Dense"
+    Description: "Increases damage dealt per block fallen before the melee attack!"
+    ModifierItemName: "Dense Iron"
+    DescriptionModifierItem: "Modifier-Item for the Dense-Modifier"
   Directing:
     Name: "Directing"
     Description: "Loot from killed mobs or broken Blocks goes directly into your Inventory!"
@@ -209,6 +214,7 @@ Modifier:
     Statistic_Used: "Endermen impersonated: %amount"
     Statistic_Distance: "Total Distance skipped: %amount Blocks"
     Statistic_Swapped: "Amount of Entities swapped: %amount"
+    PCO_require_sneaking: "Require sneaking to teleport"
   Evasive:
     Name: "Evasive"
     Description: "Chance to dodge incoming attacks (%chance per Level) - %sneakX when sneaking, %sprintX when sprinting, %pvpX when in PvP"
@@ -265,6 +271,7 @@ Modifier:
     Description: "Arrows home to targets in a %radius Block Radius! Higher Levels increase accuracy."
     ModifierItemName: "Ballistics Processor"
     DescriptionModifierItem: "Modifier-Item for the Homing-Modifier"
+    PCO_enabled: "Enabled"
   Infinity:
     Name: "Infinity"
     Description: "You only need one arrow to shoot a bow and the trident comes back to you!"
@@ -305,6 +312,7 @@ Modifier:
     Description: "Shoot a magic arrow that is not affected by gravity and flies %amount% of the normal speed! If the arrow hits a target it does %min% to %max% more damage (depending on level)! Costs %xp XP to shoot!"
     ModifierItemName: "Magic Arrow"
     DescriptionModifierItem: "Modifier-Item for the Magical-Modifier"
+    NotEnoughXP: "Not enough XP to shoot!"
   Melting:
     Name: "Melting"
     Description: "%amount% extra damage against burning enemies and %amount% less damage taken while on fire!"
@@ -337,9 +345,10 @@ Modifier:
     DescriptionModifierItem: "Modifier-Item for the Photosynthesis-Modifier"
     NotifyWhenActive: "Photosynthesis active..."
     Statistic_Healed: "Total Durability Restored: %amount"
+    PCO_notify_when_active: "Notify when the modifier is active in the actionbar"
   Piercing:
     Name: "Piercing"
-    Description: "Arrows pass through multiple enemies!"
+    Description: "Arrows pass through multiple enemies and melee hit penetrate armor!"
     ModifierItemName: "Bodkin Point"
     DescriptionModifierItem: "Modifier-Item for the Piercing-Modifier"
   Poisonous:
@@ -352,11 +361,15 @@ Modifier:
     Description: "Destroy more blocks per swing with your tool!"
     ModifierItemName: "Enchanted Emerald"
     DescriptionModifierItem: "Modifier-Item for the Power-Modifier"
+    PCO_level_1_vertical: "Apply the effect vertically on level 1"
+    PCO_clamp_level: "Clamp the modifier to a certain level"
   Propelling:
     Name: "Propelling"
-    Description: "Propel yourself through the air with sneaking while gliding with the elytra or standing in water with the trident!"
+    Description: "Propel yourself through the air with sneaking while gliding with the elytra, standing in water with the trident or attacking from above while falling with a melee weapon!"
     ModifierItemName: "Enchanted Fireworkstar"
     DescriptionModifierItem: "Modifier-Item for the Propelling-Modifier"
+    PCO_particle: "Show particles when using the modifier"
+    PCO_sound: "Play a sound when using the modifier"
   Protecting:
     Name: "Protecting"
     Description: "Your armor protects you better against damage!"
@@ -461,11 +474,12 @@ Modifier:
     ModifierItemName: "Wooden Emerald"
     DescriptionModifierItem: "Modifier-Item for the Timber-Modifier"
     Statistic_Used: "Trees chopped: %amount"
+    PCO_plant_sapling: "Plant a sapling after chopping a tree"
   Mutating:
     Name: "Mutating"
     Description: "Increases the chance by %chance% per level to get %amount random modifier on an item level up!"
     Description_Level0: "This effect also works with a base chance when the tool does not have this modifier!"
-    ModifierItemName: "%ITALIC%Un%UNDERLINE%st%MAGIC%ab%RESET%%ITALIC%le C%MAGIC%o%STRIKE%re"
+    ModifierItemName: "%ITALIC%Un%UNDERLINE%st%MAGIC%ab%RESET%%DARK_GRAY%%ITALIC%le C%MAGIC%o%STRIKE%re"
     DescriptionModifierItem: "Modifier-Item for the Mutating-Modifier"
   Undead:
     Name: "Undead"
@@ -526,6 +540,7 @@ ToolType.FISHINGROD: "Fishing Rods"
 ToolType.HELMET: "Helmets"
 ToolType.HOE: "Hoes"
 ToolType.INVALID: "Invalid"
+ToolType.MACE: "Maces"
 ToolType.LEGGINGS: "Leggings"
 ToolType.OTHER: "Other"
 ToolType.PICKAXE: "Pickaxes"
@@ -575,6 +590,9 @@ Enchantment:
   aqua_affinity: "Aqua Affinity"
   soul_speed: "Soul Speed"
   swift_sneak: "Swift Sneak"
+  density: "Density"
+  wind_burst: "Wind Burst"
+  breach: "Breach"
 
 Updater.Unable: "Unable to check for updates!"
 Updater.UpdateAvailable: "There is an update available on spigotmc.org!"

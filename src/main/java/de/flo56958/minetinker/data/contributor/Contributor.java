@@ -12,7 +12,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -25,7 +26,7 @@ public class Contributor {
 			ArrayList<JsonObject> contributorList = new ArrayList<>();
 			{
 				//Obtain Information over GitHub API
-				String cons = new Scanner(new URL("https://api.github.com/repos/Flo56958/MineTinker/contributors").openStream(),
+				String cons = new Scanner(new URI("https://api.github.com/repos/Flo56958/MineTinker/contributors").toURL().openStream(),
 						StandardCharsets.UTF_8).useDelimiter("\\A").next();
 				if (cons != null) {
 					try {
@@ -35,7 +36,7 @@ public class Contributor {
 				}
 			}
 			{
-				JsonArray json = JsonParser.parseString(new Scanner(new URL("https://raw.githubusercontent.com/Flo56958/MineTinker/master/contributors.json").openStream(),
+				JsonArray json = JsonParser.parseString(new Scanner(new URI("https://raw.githubusercontent.com/Flo56958/MineTinker/master/contributors.json").toURL().openStream(),
 						StandardCharsets.UTF_8).useDelimiter("\\A").next()).getAsJsonArray();
 				json.forEach(e -> {
 					JsonObject o = e.getAsJsonObject();
@@ -50,11 +51,11 @@ public class Contributor {
 					JsonElement discord = o.get("discord");
 					JsonElement other = o.get("other");
 					contributors.add(
-							new Contributor((minecraft.isJsonNull()) ? null : UUID.fromString(minecraft.getAsString()), g,
-									(transifex.isJsonNull()) ? null : transifex.getAsString(),
+							new Contributor(minecraft.isJsonNull() ? null : UUID.fromString(minecraft.getAsString()), g,
+									transifex.isJsonNull() ? null : transifex.getAsString(),
 									o.getAsJsonArray("transifex_languages"),
-									(discord.isJsonNull()) ? null : discord.getAsString(),
-									(other.isJsonNull()) ? null : other.getAsJsonArray()));
+									discord.isJsonNull() ? null : discord.getAsString(),
+									other.isJsonNull() ? null : other.getAsJsonArray()));
 				});
 			}
 			contributorList.removeIf(o -> o.get("login").getAsString().contains("[bot]")); //filter out bots
@@ -62,12 +63,12 @@ public class Contributor {
 			//Add all GitHub Contributers that don't have Minecraft or Transifex
 			contributorList.removeIf(o -> contributors.stream().anyMatch(c -> o.get("login").getAsString().equals(c.getGithubUsername())));
 			contributorList.forEach(o -> contributors.add(new Contributor(null, o, null, null, null, null)));
-		} catch (IOException e) {
+		} catch (IOException | URISyntaxException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static ArrayList<Contributor> getContributors() {
+	public static List<Contributor> getContributors() {
 		return contributors;
 	}
 
@@ -104,14 +105,14 @@ public class Contributor {
 		if (mcUUID != null) {
 			if (itemMeta instanceof SkullMeta) {
 				try {
-					JsonObject mcLookup = JsonParser.parseString(new Scanner(new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + mcUUID).openStream(),
+					JsonObject mcLookup = JsonParser.parseString(new Scanner(new URI("https://sessionserver.mojang.com/session/minecraft/profile/" + mcUUID).toURL().openStream(),
 							StandardCharsets.UTF_8).useDelimiter("\\A").next()).getAsJsonObject();
 					String name = mcLookup.get("name").getAsString();
 					displayName += name + "/";
 					try {
 						((SkullMeta) itemMeta).setOwningPlayer(Bukkit.getOfflinePlayer(mcUUID));
 					} catch (NullPointerException ignored) {}
-				} catch (IOException | NoSuchElementException e) {
+				} catch (IOException | NoSuchElementException | URISyntaxException e) {
 					ChatWriter.logError(LanguageManager.getString("Alert.MinecraftAPI"));
 					if (MineTinker.getPlugin().getConfig().getBoolean("logging.debug")) {
 						System.out.println("This error is not a bug or serious error. MT caught the error and just prints the information in the console!");
@@ -132,7 +133,7 @@ public class Contributor {
 				languages.forEach(o -> this.languages.add(o.getAsString()));
 				this.languages.sort(String::compareToIgnoreCase);
 				StringBuilder sb = new StringBuilder();
-				for(String s : this.languages) {
+				for (String s : this.languages) {
 					sb.append(s).append(", ");
 				}
 				lore.add(ChatColor.GOLD + "Translating Languages: " + ChatColor.WHITE + sb.substring(0, sb.length() - 2));

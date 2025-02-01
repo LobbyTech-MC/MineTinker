@@ -1,5 +1,7 @@
 package de.flo56958.minetinker.modifiers;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.ToolLevelUpEvent;
 import de.flo56958.minetinker.data.GUIs;
@@ -12,6 +14,8 @@ import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.data.DataHandler;
 import de.flo56958.minetinker.utils.data.UUIDTagType;
 import de.flo56958.minetinker.utils.datatypes.Pair;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationInterface;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
@@ -22,7 +26,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -33,6 +37,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.Collator;
 import java.util.*;
 
 public class ModManager {
@@ -137,6 +142,12 @@ public class ModManager {
 		incompatibilityList.add(Phasing.instance().getKey() + ":" + Ender.instance().getKey());
 		incompatibilityList.add(Phasing.instance().getKey() + ":" + Magical.instance().getKey());
 		incompatibilityList.add(Phasing.instance().getKey() + ":" + Homing.instance().getKey());
+		incompatibilityList.add(Dense.instance().getKey() + ":" + Smite.instance().getKey());
+		incompatibilityList.add(Dense.instance().getKey() + ":" + SpidersBane.instance().getKey());
+		incompatibilityList.add(Dense.instance().getKey() + ":" + Piercing.instance().getKey());
+		incompatibilityList.add(Piercing.instance().getKey() + ":" + Smite.instance().getKey());
+		incompatibilityList.add(Piercing.instance().getKey() + ":" + SpidersBane.instance().getKey());
+
 
 		Plugin plugin = Bukkit.getPluginManager().getPlugin("ProtocolLib");
 		if (plugin != null && plugin.isEnabled())
@@ -150,6 +161,7 @@ public class ModManager {
 		modifierconfig.addDefault("CommandIgnoresToolTypes", false);
 		modifierconfig.addDefault("CommandIgnoresMaxLevel", false);
 		modifierconfig.addDefault("IgnoreIncompatibilityIfModifierAlreadyApplied", true);
+		modifierconfig.addDefault("EnchantableRequiresLevels", true);
 		ConfigurationManager.saveConfig(modifierconfig);
 	}
 
@@ -194,22 +206,22 @@ public class ModManager {
 	}
 
 	public static @Nullable Pair<@Nullable Material, @NotNull Integer> itemUpgrader(@NotNull final Material tool, @NotNull final Material material) {
-		String name = tool.name().split("_")[0].toLowerCase();
+		String name = Iterables.get(Splitter.on('_').split(tool.name()), 0).toLowerCase();
 
-		if (name.equals("wooden") && material.name().contains("PLANKS")
-				|| name.equals("stone") && material == Material.COBBLESTONE
-				|| name.equals("iron") && material == Material.IRON_INGOT
-				|| name.equals("gold") && material == Material.GOLD_INGOT
-				|| name.equals("diamond") && material == Material.DIAMOND
-				|| name.equals("leather") && material == Material.LEATHER
-				|| name.equals("turtle") && material == Material.SCUTE
-				|| name.equals("chainmail") && material == Material.IRON_BARS
-				|| name.equals("netherite") && material == Material.NETHERITE_INGOT)
+		if ((name.equals("wooden") && material.name().contains("PLANKS"))
+				|| (name.equals("stone") && material == Material.COBBLESTONE)
+				|| (name.equals("iron") && material == Material.IRON_INGOT)
+				|| (name.equals("gold") && material == Material.GOLD_INGOT)
+				|| (name.equals("diamond") && material == Material.DIAMOND)
+				|| (name.equals("leather") && material == Material.LEATHER)
+				|| (name.equals("turtle") && material == Material.TURTLE_SCUTE)
+				|| (name.equals("chainmail") && material == Material.IRON_BARS)
+				|| (name.equals("netherite") && material == Material.NETHERITE_INGOT))
 			return null;
 
 		// upgrading from diamond to netherrite should only require one material
 		final boolean reduceToOne = name.equals("diamond") && material == Material.NETHERITE_INGOT;
-		return switch(ToolType.get(tool)) {
+		return switch (ToolType.get(tool)) {
 			case AXE -> new Pair<>(getToolUpgrade(material, "AXE"), reduceToOne ? 1 : 3);
 			case BOOTS -> new Pair<>(getArmorUpgrade(material, "BOOTS"), reduceToOne ? 1 : 4);
 			case CHESTPLATE -> new Pair<>(getArmorUpgrade(material, "CHESTPLATE"), reduceToOne ? 1 : 8);
@@ -225,8 +237,8 @@ public class ModManager {
 
 	private static @Nullable Material getToolUpgrade(@NotNull final Material material, @NotNull final String tool) {
 		return switch (material) {
-			case ACACIA_PLANKS, BIRCH_PLANKS, DARK_OAK_PLANKS, JUNGLE_PLANKS, OAK_PLANKS, SPRUCE_PLANKS
-					-> Material.getMaterial("WOODEN_" + tool);
+			case ACACIA_PLANKS, BIRCH_PLANKS, DARK_OAK_PLANKS, JUNGLE_PLANKS, OAK_PLANKS, SPRUCE_PLANKS ->
+					Material.getMaterial("WOODEN_" + tool);
 			case COBBLESTONE -> Material.getMaterial("STONE_" + tool);
 			case DIAMOND -> Material.getMaterial("DIAMOND_" + tool);
 			case GOLD_INGOT -> Material.getMaterial("GOLDEN_" + tool);
@@ -259,33 +271,41 @@ public class ModManager {
 		layout = ConfigurationManager.getConfig("layout.yml");
 
 		removeRecipes();
-		mods.forEach(mod -> {
+		this.mods.forEach(mod -> {
 			if (mod instanceof Listener listener) //Disable Events
-				HandlerList.unregisterAll(listener);});
-		mods.clear();
-		mods.addAll(allMods);
-		mods.removeIf(mod -> !mod.isAllowed());
-
-		mods.sort(Comparator.comparing(Modifier::getName));
+				HandlerList.unregisterAll(listener);
+			if (mod instanceof PlayerConfigurationInterface pci)
+				PlayerConfigurationManager.getInstance().unregisterPlayerConfigInterface(pci);
+		});
+		this.mods.clear();
+		this.mods.addAll(allMods);
 
 		this.ToolIdentifier = config.getString("ToolIdentifier");
 		this.ArmorIdentifier = config.getString("ArmorIdentifier");
 
-		removeRecipes();
-		this.allMods.forEach(Modifier::reload);
+		this.mods.forEach(Modifier::reload);
+		this.mods.removeIf(mod -> !mod.isAllowed());
 		this.mods.forEach(Modifier::registerCraftingRecipe);
+
+		// Sort the modifiers by name with Language support
+		final Collator collator = Collator.getInstance(Locale.forLanguageTag(LanguageManager.getLang()));
+		collator.setStrength(Collator.PRIMARY);
+		this.mods.sort(Comparator.comparing(Modifier::getName, collator));
 
 		//get Modifier incompatibilities
 		this.reloadIncompatibilities();
 
-		mods.forEach(mod -> {
+		this.mods.forEach(mod -> {
 			if (mod instanceof Listener listener) //Enable Events
-				Bukkit.getPluginManager().registerEvents(listener, mod.getSource());});
+				Bukkit.getPluginManager().registerEvents(listener, mod.getSource());
+			if (mod instanceof PlayerConfigurationInterface pci)
+				PlayerConfigurationManager.getInstance().registerPlayerConfigInterface(pci);
+		});
 
 		if (layout.getBoolean("OverrideLanguagesystem", false)) {
 			this.loreScheme = layout.getStringList("LoreLayout");
 
-			loreScheme.replaceAll(ChatWriter::addColors);
+			this.loreScheme.replaceAll(ChatWriter::addColors);
 		} else {
 			this.loreScheme = new ArrayList<>();
 			this.loreScheme.add(LanguageManager.getString("Commands.ItemStatistics.Level")
@@ -311,7 +331,7 @@ public class ModManager {
 		final List<String> possibleKeys = new ArrayList<>();
 		this.allMods.forEach(m -> possibleKeys.add(m.getKey()));
 		possibleKeys.sort(String::compareToIgnoreCase);
-		possibleKeys.add(0, "Do not edit this list; just for documentation of what Keys can be used under Incompatibilities");
+		possibleKeys.addFirst("Do not edit this list; just for documentation of what Keys can be used under Incompatibilities");
 		modifierconfig.set("PossibleKeys", possibleKeys);
 		ConfigurationManager.saveConfig(modifierconfig);
 		ConfigurationManager.loadConfig("", "Modifiers.yml");
@@ -320,15 +340,15 @@ public class ModManager {
 		modifierconfig = ConfigurationManager.getConfig("Modifiers.yml");
 		final List<String> incompatibilityList = modifierconfig.getStringList("Incompatibilities");
 		incompatibilityList.forEach(s -> {
-			final String[] splits = s.split(":");
-			if (splits.length != 2) return;
+			final List<String> splits = Splitter.on(':').splitToList(s);
+			if (splits.size() != 2) return;
 			final Modifier mod1 = this.mods.stream()
-					.filter(m -> m.getKey().equals(splits[0]))
+					.filter(m -> m.getKey().equals(splits.getFirst()))
 					.findFirst()
 					.orElse(null);
 
 			final Modifier mod2 = this.mods.stream()
-					.filter(m -> m.getKey().equals(splits[1]))
+					.filter(m -> m.getKey().equals(splits.get(1)))
 					.findFirst()
 					.orElse(null);
 
@@ -346,6 +366,7 @@ public class ModManager {
 
 	/**
 	 * This Method returns the original Set.
+	 *
 	 * @param m The modifier to get the Incompatibilities for
 	 * @return The incompatibilities as an unmodifiable Set
 	 */
@@ -358,17 +379,19 @@ public class ModManager {
 	 *
 	 * @param mod the modifier instance
 	 * @throws IllegalArgumentException if the modifier is already registered
-	 * 									or if a modifier with the same CustomModelData is already registered
-	 * 									or if a modifier with the same Key is already registered
+	 *                                  or if a modifier with the same CustomModelData is already registered
+	 *                                  or if a modifier with the same Key is already registered
 	 */
 	@SuppressWarnings("UnusedReturnValue")
 	@Contract("null -> false")
 	public boolean register(@Nullable final Modifier mod) {
 		if (mod == null) return false;
-		if (allMods.contains(mod)) throw new IllegalArgumentException("Modifier " + mod.getKey() + " already registered!");
+		if (allMods.contains(mod))
+			throw new IllegalArgumentException("Modifier " + mod.getKey() + " already registered!");
 		if (allMods.stream().filter(m -> m.customModelData == mod.customModelData).findFirst().orElse(null) != null)
 			throw new IllegalArgumentException("Modifier " + mod.getKey() + " with same CustomModelData " + mod.customModelData + " already registered!");
-		if (modKeys.containsKey(mod.getKey())) throw new IllegalArgumentException("Modifier with Key " + mod.getKey() + " already registered!");
+		if (modKeys.containsKey(mod.getKey()))
+			throw new IllegalArgumentException("Modifier with Key " + mod.getKey() + " already registered!");
 
 		modKeys.put(mod.getKey(), mod);
 		mod.reload();
@@ -379,6 +402,8 @@ public class ModManager {
 			mod.registerCraftingRecipe();
 			if (mod instanceof Listener listener) //Enable Events
 				Bukkit.getPluginManager().registerEvents(listener, mod.getSource());
+			if (mod instanceof PlayerConfigurationInterface pci)
+				PlayerConfigurationManager.getInstance().registerPlayerConfigInterface(pci);
 		}
 		reloadIncompatibilities();
 		if (!mod.getSource().equals(MineTinker.getPlugin())) GUIs.reload();
@@ -433,7 +458,7 @@ public class ModManager {
 	 *
 	 * @return the modifier list which is copied and can be modified
 	 */
-	public @NotNull HashSet<Modifier> getAllMods() {
+	public @NotNull Set<Modifier> getAllMods() {
 		return new HashSet<>(this.allMods);
 	}
 
@@ -449,9 +474,9 @@ public class ModManager {
 	}
 
 	public boolean addMod(final Player player, @NotNull final ItemStack item, @NotNull final Modifier modifier, final boolean fromCommand, final boolean fromRandom, final boolean silent, final boolean modifySlotCount) {
-		if (!modifier.getKey().equals(ExtraModifier.instance().getKey())
+		if (!modifier.equals(ExtraModifier.instance())
 				&& !modifier.checkAndAdd(player, item, fromCommand, fromRandom, silent, modifySlotCount))
-				return false;
+			return false;
 
 		// apply modifier
 		if (!modifier.applyMod(player, item, fromCommand)) return false;
@@ -459,17 +484,15 @@ public class ModManager {
 		ItemMeta meta = item.getItemMeta();
 		if (meta == null) return true;
 
-		if (config.getBoolean("HideEnchants", true)) {
+		if (config.getBoolean("HideEnchants", true))
 			meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-		} else {
+		else
 			meta.removeItemFlags(ItemFlag.HIDE_ENCHANTS);
-		}
 
-		if (config.getBoolean("HideAttributes", true)) {
+		if (config.getBoolean("HideAttributes", true))
 			meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		} else {
+		else
 			meta.removeItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-		}
 
 		item.setItemMeta(meta);
 		return true;
@@ -549,7 +572,7 @@ public class ModManager {
 	/**
 	 * sets the exp amount of the tool
 	 *
-	 * @param is the item for exp to be set
+	 * @param is  the item for exp to be set
 	 * @param exp the amount of exp to set
 	 */
 	private void setExp(@Nullable final ItemStack is, final long exp) {
@@ -616,8 +639,8 @@ public class ModManager {
 			}
 		}
 
-		if (player != null && config.getBoolean("actionbar-on-exp-gain"))
-			ActionBarListener.addXP(player, (int) amount);
+		if (player != null)
+			ActionBarListener.addEXP(player, (int) amount);
 
 		setExp(tool, exp);
 		rewriteLore(tool);
@@ -639,15 +662,6 @@ public class ModManager {
 	@Contract("null -> false")
 	public boolean isToolViable(@Nullable final ItemStack tool) {
 		return tool != null && DataHandler.hasTag(tool, this.ToolIdentifier, PersistentDataType.INTEGER);
-	}
-
-	/**
-	 * @param wand the ItemStack
-	 * @return if the ItemStack is viable as MineTinker-Builderswand
-	 */
-	@Contract("null -> false")
-	public boolean isWandViable(@Nullable final ItemStack wand) {
-		return wand != null && DataHandler.hasTag(wand, "identifier_builderswand", PersistentDataType.INTEGER);
 	}
 
 	/**
@@ -778,7 +792,7 @@ public class ModManager {
 		int damage = 0;
 
 		// Don't convert already converted items
-		if (isArmorViable(is) || isToolViable(is) || isWandViable(is)) return false;
+		if (isArmorViable(is) || isToolViable(is)) return false;
 
 		if (is.getItemMeta() instanceof Damageable)
 			damage = ((Damageable) is.getItemMeta()).getDamage();
@@ -796,7 +810,7 @@ public class ModManager {
 		}
 
 		boolean eligible = false;
-		if ((ToolType.AXE.contains(m)
+		if (ToolType.AXE.contains(m)
 				|| ToolType.BOW.contains(m)
 				|| ToolType.CROSSBOW.contains(m)
 				|| ToolType.HOE.contains(m)
@@ -806,7 +820,8 @@ public class ModManager {
 				|| ToolType.TRIDENT.contains(m)
 				|| ToolType.SHEARS.contains(m)
 				|| ToolType.SHIELD.contains(m)
-				|| ToolType.FISHINGROD.contains(m)) && !isWandViable(is)) {
+				|| ToolType.FISHINGROD.contains(m)
+				|| ToolType.MACE.contains(m)) {
 			DataHandler.setTag(is, this.ToolIdentifier, 56958, PersistentDataType.INTEGER);
 			eligible = true;
 		}
@@ -837,7 +852,7 @@ public class ModManager {
 		final ItemMeta meta = is.getItemMeta();
 
 		if (meta == null) return true;
-		if (!config.getBoolean("ConvertEnchantsAndAttributes"))  return true;
+		if (!config.getBoolean("ConvertEnchantsAndAttributes")) return true;
 
 		for (final Map.Entry<Enchantment, Integer> entry : meta.getEnchants().entrySet()) {
 			final Modifier modifier = getModifierFromEnchantment(entry.getKey());
@@ -868,7 +883,8 @@ public class ModManager {
 
 	/**
 	 * set the creator of the item
-	 * @param is the item
+	 *
+	 * @param is     the item
 	 * @param entity the entity that created the item
 	 */
 	private void setCreator(@Nullable final ItemStack is, @Nullable final Entity entity) {
@@ -878,6 +894,7 @@ public class ModManager {
 
 	/**
 	 * get the creator of the item
+	 *
 	 * @param is the item
 	 * @return the creator of the item
 	 */
@@ -890,6 +907,7 @@ public class ModManager {
 
 	/**
 	 * Add the Armor Attributes to the ItemStack
+	 *
 	 * @param is the enchantment
 	 */
 	public void addArmorAttributes(@NotNull final ItemStack is) {
@@ -902,7 +920,8 @@ public class ModManager {
 
 		switch (is.getType()) {
 			case LEATHER_BOOTS, CHAINMAIL_BOOTS, GOLDEN_BOOTS, LEATHER_HELMET -> armor = 1.0d;
-			case IRON_BOOTS, CHAINMAIL_HELMET, IRON_HELMET, GOLDEN_HELMET, TURTLE_HELMET, LEATHER_LEGGINGS -> armor = 2.0d;
+			case IRON_BOOTS, CHAINMAIL_HELMET, IRON_HELMET, GOLDEN_HELMET, TURTLE_HELMET, LEATHER_LEGGINGS ->
+					armor = 2.0d;
 			case DIAMOND_BOOTS, DIAMOND_HELMET -> {
 				armor = 3.0d;
 				toughness = 2.0d;
@@ -936,53 +955,65 @@ public class ModManager {
 			}
 		}
 
+		final String additional = "_" + ToolType.get(is.getType()).name();
+
 		AttributeModifier armorAM = null;
 		AttributeModifier toughnessAM = null;
 		AttributeModifier knockbackResAM = null;
 
+		final NamespacedKey nkArmor = new NamespacedKey(MineTinker.getPlugin(), "generic.armor" + additional);
+		final NamespacedKey nkArmorToughness = new NamespacedKey(MineTinker.getPlugin(), "generic.armor_toughness" + additional);
+		final NamespacedKey nkKnockbackRes = new NamespacedKey(MineTinker.getPlugin(), "generic.knockback_resistance" + additional);
+
 		if (ToolType.BOOTS.contains(is.getType())) {
-			armorAM = new AttributeModifier(UUID.randomUUID(), "generic.armor", armor,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.FEET);
-			toughnessAM = new AttributeModifier(UUID.randomUUID(), "generic.armor_toughness", toughness,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.FEET);
-			knockbackResAM = new AttributeModifier(UUID.randomUUID(), "generic.knockback_resistance", knockback_res,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.FEET);
+			armorAM = new AttributeModifier(nkArmor, armor, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.FEET);
+			toughnessAM = new AttributeModifier(nkArmorToughness, toughness, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.FEET);
+			knockbackResAM = new AttributeModifier(nkKnockbackRes, knockback_res, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.FEET);
 		} else if (ToolType.CHESTPLATE.contains(is.getType())) {
-			armorAM = new AttributeModifier(UUID.randomUUID(), "generic.armor", armor,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.CHEST);
-			toughnessAM = new AttributeModifier(UUID.randomUUID(), "generic.armor_toughness", toughness,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.CHEST);
-			knockbackResAM = new AttributeModifier(UUID.randomUUID(), "generic.knockback_resistance", knockback_res,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.CHEST);
+			armorAM = new AttributeModifier(nkArmor, armor, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.CHEST);
+			toughnessAM = new AttributeModifier(nkArmorToughness, toughness, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.CHEST);
+			knockbackResAM = new AttributeModifier(nkKnockbackRes, knockback_res, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.CHEST);
 		} else if (ToolType.HELMET.contains(is.getType())) {
-			armorAM = new AttributeModifier(UUID.randomUUID(), "generic.armor", armor,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.HEAD);
-			toughnessAM = new AttributeModifier(UUID.randomUUID(), "generic.armor_toughness", toughness,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.HEAD);
-			knockbackResAM = new AttributeModifier(UUID.randomUUID(), "generic.knockback_resistance", knockback_res,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.HEAD);
+			armorAM = new AttributeModifier(nkArmor, armor, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.HEAD);
+			toughnessAM = new AttributeModifier(nkArmorToughness, toughness, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.HEAD);
+			knockbackResAM = new AttributeModifier(nkKnockbackRes, knockback_res, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.HEAD);
 		} else if (ToolType.LEGGINGS.contains(is.getType())) {
-			armorAM = new AttributeModifier(UUID.randomUUID(), "generic.armor", armor,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.LEGS);
-			toughnessAM = new AttributeModifier(UUID.randomUUID(), "generic.armor_toughness", toughness,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.LEGS);
-			knockbackResAM = new AttributeModifier(UUID.randomUUID(), "generic.knockback_resistance", knockback_res,
-					AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.LEGS);
+			armorAM = new AttributeModifier(nkArmor, armor, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.LEGS);
+			toughnessAM = new AttributeModifier(nkArmorToughness, toughness, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.LEGS);
+			knockbackResAM = new AttributeModifier(nkKnockbackRes, knockback_res, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.LEGS);
 		} else if (!ToolType.ELYTRA.contains(is.getType())) return;
 
+		Collection<AttributeModifier> list = meta.getAttributeModifiers(Attribute.ARMOR);
+		if (list != null) {
+			list = new ArrayList<>(list); // Collection is immutable
+			list.removeIf(am -> !nkArmor.getNamespace().equals(am.getKey().getNamespace()));
+			list.removeIf(am -> !nkArmor.getKey().contains(am.getKey().getKey()));
+			list.forEach(am -> meta.removeAttributeModifier(Attribute.ARMOR, am));
+		}
 		if (armor > 0.0d && armorAM != null) {
-			meta.removeAttributeModifier(Attribute.GENERIC_ARMOR);
-			meta.addAttributeModifier(Attribute.GENERIC_ARMOR, armorAM);
+			meta.addAttributeModifier(Attribute.ARMOR, armorAM);
 		}
 
+		list = meta.getAttributeModifiers(Attribute.ARMOR_TOUGHNESS);
+		if (list != null) {
+			list = new ArrayList<>(list); // Collection is immutable
+			list.removeIf(am -> !nkArmorToughness.getNamespace().equals(am.getKey().getNamespace()));
+			list.removeIf(am -> !nkArmorToughness.getKey().contains(am.getKey().getKey()));
+			list.forEach(am -> meta.removeAttributeModifier(Attribute.ARMOR_TOUGHNESS, am));
+		}
 		if (toughness > 0.0d && toughnessAM != null) {
-			meta.removeAttributeModifier(Attribute.GENERIC_ARMOR_TOUGHNESS);
-			meta.addAttributeModifier(Attribute.GENERIC_ARMOR_TOUGHNESS, toughnessAM);
+			meta.addAttributeModifier(Attribute.ARMOR_TOUGHNESS, toughnessAM);
 		}
 
+		list = meta.getAttributeModifiers(Attribute.KNOCKBACK_RESISTANCE);
+		if (list != null) {
+			list = new ArrayList<>(list); // Collection is immutable
+			list.removeIf(am -> !nkKnockbackRes.getNamespace().equals(am.getKey().getNamespace()));
+			list.removeIf(am -> !nkKnockbackRes.getKey().contains(am.getKey().getKey()));
+			list.forEach(am -> meta.removeAttributeModifier(Attribute.KNOCKBACK_RESISTANCE, am));
+		}
 		if (knockback_res > 0.0d && knockbackResAM != null) {
-			meta.removeAttributeModifier(Attribute.GENERIC_KNOCKBACK_RESISTANCE);
-			meta.addAttributeModifier(Attribute.GENERIC_KNOCKBACK_RESISTANCE, knockbackResAM);
+			meta.addAttributeModifier(Attribute.KNOCKBACK_RESISTANCE, knockbackResAM);
 		}
 
 		if (config.getBoolean("HideAttributes")) {
@@ -992,19 +1023,17 @@ public class ModManager {
 		}
 
 		is.setItemMeta(meta);
-
-		Hardened.instance().reapplyAttributes(is);
 	}
 
 	/**
-	 * @param m the material the item should be
-	 * @param name the name of the item
+	 * @param m           the material the item should be
+	 * @param name        the name of the item
 	 * @param description the description of the item, the description is split into multiple lines depending on length
-	 * @param mod the modifier that is applied to the item
+	 * @param mod         the modifier that is applied to the item
 	 * @return the created ItemStack
 	 */
 	public @NotNull ItemStack createModifierItem(@NotNull final Material m, @NotNull final String name,
-												 @NotNull final String description, @NotNull final Modifier mod) {
+	                                             @NotNull final String description, @NotNull final Modifier mod) {
 		final ItemStack is = new ItemStack(m, 1);
 		final ItemMeta meta = is.getItemMeta();
 
@@ -1148,21 +1177,23 @@ public class ModManager {
 	 * @param tool        the Tool
 	 * @return false: if broken; true: if enough durability
 	 */
-	public boolean durabilityCheck(@NotNull final Cancellable cancellable, @NotNull final Player player, @NotNull final ItemStack tool) {
+	public boolean durabilityCheck(@NotNull final Cancellable cancellable, @NotNull final Player player, @NotNull final ItemStack tool, final boolean changeState) {
 		if (!config.getBoolean("UnbreakableTools", true)) return true;
 		if (player.getGameMode() == GameMode.CREATIVE) return true;
 
 		final ItemMeta meta = tool.getItemMeta();
 
-		if (meta instanceof Damageable damageable && tool.getType().getMaxDurability() - damageable.getDamage() <= 2) {
+		if (!(meta instanceof Damageable damageable) || tool.getType().getMaxDurability() - damageable.getDamage() > 2)
+			return true;
+
+		if (changeState) {
 			cancellable.setCancelled(true);
 
 			if (config.getBoolean("Sound.OnBreaking", true)) {
 				player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.5F, 0.5F);
 			}
-			return false;
 		}
-		return true;
+		return false;
 	}
 
 	/**

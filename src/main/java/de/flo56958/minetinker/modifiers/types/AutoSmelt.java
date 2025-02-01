@@ -1,17 +1,17 @@
 package de.flo56958.minetinker.modifiers.types;
 
+import com.google.common.base.Splitter;
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.MTBlockBreakEvent;
 import de.flo56958.minetinker.data.ToolType;
-import de.flo56958.minetinker.modifiers.Modifier;
+import de.flo56958.minetinker.modifiers.PlayerConfigurableModifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
 import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.data.DataHandler;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationOption;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,15 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
-public class AutoSmelt extends Modifier implements Listener {
+public class AutoSmelt extends PlayerConfigurableModifier implements Listener {
 
 	private static AutoSmelt instance;
 	private final EnumMap<Material, @NotNull Triplet> conversions = new EnumMap<>(Material.class);
 
 	private int percentagePerLevel;
-	private boolean hasSound;
-	private boolean hasParticles;
 	private boolean worksUnderWater;
 	private boolean toggleable;
 
@@ -74,8 +73,6 @@ public class AutoSmelt extends Modifier implements Listener {
 		config.addDefault("SlotCost", 1);
 		config.addDefault("ModifierItemMaterial", Material.FURNACE.name());
 		config.addDefault("PercentagePerLevel", 100);
-		config.addDefault("Sound", true); //Auto-Smelt makes a sound
-		config.addDefault("Particles", true); //Auto-Smelt will create a particle effect when triggered
 		config.addDefault("WorksUnderWater", true);
 		config.addDefault("Toggleable", false);
 
@@ -95,6 +92,9 @@ public class AutoSmelt extends Modifier implements Listener {
 		config.addDefault("Recipe.Materials", recipeMaterials);
 
 		conversions.clear();
+		Tag.LOGS_THAT_BURN.getValues().forEach(m -> conversions.put(m, new Triplet(Material.CHARCOAL, 1)));
+		Tag.LEAVES.getValues().forEach(m -> conversions.put(m, new Triplet(Material.STICK, 1)));
+
 		conversions.put(Material.STONE, new Triplet(Material.STONE, 1));
 		conversions.put(Material.COBBLESTONE, new Triplet(Material.STONE, 1));
 		conversions.put(Material.SAND, new Triplet(Material.GLASS, 1));
@@ -119,36 +119,6 @@ public class AutoSmelt extends Modifier implements Listener {
 		conversions.put(Material.GREEN_TERRACOTTA, new Triplet(Material.GREEN_GLAZED_TERRACOTTA, 1));
 		conversions.put(Material.RED_TERRACOTTA, new Triplet(Material.RED_GLAZED_TERRACOTTA, 1));
 		conversions.put(Material.BLACK_TERRACOTTA, new Triplet(Material.BLACK_GLAZED_TERRACOTTA, 1));
-		conversions.put(Material.ACACIA_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.BIRCH_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.DARK_OAK_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.JUNGLE_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.OAK_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.SPRUCE_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_ACACIA_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_BIRCH_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_DARK_OAK_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_JUNGLE_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_OAK_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_SPRUCE_LOG, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.ACACIA_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.BIRCH_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.DARK_OAK_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.JUNGLE_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.OAK_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.SPRUCE_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_ACACIA_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_BIRCH_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_DARK_OAK_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_JUNGLE_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_OAK_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_SPRUCE_WOOD, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.ACACIA_LEAVES, new Triplet(Material.STICK, 1));
-		conversions.put(Material.BIRCH_LEAVES, new Triplet(Material.STICK, 1));
-		conversions.put(Material.DARK_OAK_LEAVES, new Triplet(Material.STICK, 1));
-		conversions.put(Material.JUNGLE_LEAVES, new Triplet(Material.STICK, 1));
-		conversions.put(Material.OAK_LEAVES, new Triplet(Material.STICK, 1));
-		conversions.put(Material.SPRUCE_LEAVES, new Triplet(Material.STICK, 1));
 
 		conversions.put(Material.IRON_ORE, new Triplet(Material.IRON_INGOT, 1, true));
 		conversions.put(Material.GOLD_ORE, new Triplet(Material.GOLD_INGOT, 1, true));
@@ -162,18 +132,8 @@ public class AutoSmelt extends Modifier implements Listener {
 		// 1.16 Additions
 		conversions.put(Material.ANCIENT_DEBRIS, new Triplet(Material.NETHERITE_SCRAP, 1, true));
 		conversions.put(Material.NETHER_GOLD_ORE, new Triplet(Material.GOLD_INGOT, 1, true));
-		conversions.put(Material.CRIMSON_HYPHAE, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.CRIMSON_STEM, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.WARPED_HYPHAE, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.WARPED_STEM, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_CRIMSON_HYPHAE, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_CRIMSON_STEM, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_WARPED_HYPHAE, new Triplet(Material.CHARCOAL, 1));
-		conversions.put(Material.STRIPPED_WARPED_STEM, new Triplet(Material.CHARCOAL, 1));
 
 		//1.17 Additions
-		conversions.put(Material.AZALEA_LEAVES, new Triplet(Material.STICK, 1));
-
 		conversions.put(Material.DEEPSLATE, new Triplet(Material.DEEPSLATE, 1));
 
 		conversions.put(Material.DEEPSLATE_COAL_ORE, new Triplet(Material.AIR, 0));
@@ -186,29 +146,14 @@ public class AutoSmelt extends Modifier implements Listener {
 		conversions.put(Material.RAW_IRON_BLOCK, new Triplet(Material.IRON_INGOT, 9));
 		conversions.put(Material.COPPER_ORE, new Triplet(Material.COPPER_INGOT, 1, true));
 
-		if (MineTinker.is19compatible) {
-			conversions.put(Material.MANGROVE_LEAVES, new Triplet(Material.STICK, 1));
-			// No muddy roots
-			conversions.put(Material.MANGROVE_ROOTS, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.MANGROVE_LOG, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.STRIPPED_MANGROVE_LOG, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.MANGROVE_WOOD, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.STRIPPED_MANGROVE_WOOD, new Triplet(Material.CHARCOAL, 1));
+		// No muddy roots
+		conversions.put(Material.MANGROVE_ROOTS, new Triplet(Material.CHARCOAL, 1));
+		conversions.put(Material.MUD, new Triplet(Material.CLAY, 1));
 
-			conversions.put(Material.MUD, new Triplet(Material.CLAY, 1));
-		}
+		conversions.put(Material.BAMBOO_BLOCK, new Triplet(Material.CHARCOAL, 1));
+		conversions.put(Material.SUSPICIOUS_SAND, new Triplet(Material.GLASS, 1));
 
-		if (MineTinker.is20compatible) {
-			conversions.put(Material.CHERRY_LEAVES, new Triplet(Material.STICK, 1));
-			conversions.put(Material.CHERRY_LOG, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.STRIPPED_CHERRY_LOG, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.CHERRY_WOOD, new Triplet(Material.CHARCOAL, 1));
-			conversions.put(Material.STRIPPED_CHERRY_WOOD, new Triplet(Material.CHARCOAL, 1));
-
-			conversions.put(Material.BAMBOO_BLOCK, new Triplet(Material.CHARCOAL, 1));
-
-			conversions.put(Material.SUSPICIOUS_SAND, new Triplet(Material.GLASS, 1));
-		}
+		conversions.put(Material.TUFF, new Triplet(Material.TUFF_BRICKS, 1));
 
 		for (Material m : Material.values()) {
 			if (m.isBurnable() && m.isBlock()) {
@@ -228,8 +173,6 @@ public class AutoSmelt extends Modifier implements Listener {
 		init();
 
 		this.percentagePerLevel = config.getInt("PercentagePerLevel", 100);
-		this.hasSound = config.getBoolean("Sound", true);
-		this.hasParticles = config.getBoolean("Particles", true);
 		this.worksUnderWater = config.getBoolean("WorksUnderWater", true);
 		this.toggleable = config.getBoolean("Toggleable", false);
 
@@ -248,7 +191,7 @@ public class AutoSmelt extends Modifier implements Listener {
 					conversions.put(material, t);
 				} else error = true;
 			} else error = true;
-			if (error) ChatWriter.logError(this.getKey() +  ".yml: Error in conversion value for " + k);
+			if (error) ChatWriter.logError(this.getKey() + ".yml: Error in conversion value for " + k);
 		});
 	}
 
@@ -305,10 +248,11 @@ public class AutoSmelt extends Modifier implements Listener {
 
 		breakEvent.setDropItems(false);
 
-		if (this.hasParticles) block.getLocation().getWorld().spawnParticle(Particle.FLAME, block.getLocation(), 5);
+		if (PlayerConfigurationManager.getInstance().getBoolean(player, PARTICLES))
+			block.getLocation().getWorld().spawnParticle(Particle.FLAME, block.getLocation(), 5);
 
-		if (this.hasSound) block.getLocation().getWorld().playSound(block.getLocation(),
-				Sound.ENTITY_GENERIC_BURN, 0.2F, 0.5F);
+		if (PlayerConfigurationManager.getInstance().getBoolean(player, SOUND))
+			block.getLocation().getWorld().playSound(block.getLocation(), Sound.ENTITY_GENERIC_BURN, 0.2F, 0.5F);
 
 		//Track stats
 		final int stat = DataHandler.getTagOrDefault(tool, getKey() + "_stat_used", PersistentDataType.INTEGER, 0);
@@ -355,12 +299,12 @@ public class AutoSmelt extends Modifier implements Listener {
 
 		@Nullable
 		static Triplet fromString(@NotNull String input) {
-			String[] tok = input.split(regex);
+			final List<String> tok = Splitter.on(Pattern.compile(regex)).splitToList(input);
 			try {
-				if (tok.length == 2)
-					return new Triplet(Material.valueOf(tok[0]), Integer.parseInt(tok[1]));
-				else if (tok.length == 3)
-					return new Triplet(Material.valueOf(tok[0]), Integer.parseInt(tok[1]), Boolean.parseBoolean(tok[2]));
+				if (tok.size() == 2)
+					return new Triplet(Material.valueOf(tok.get(0)), Integer.parseInt(tok.get(1)));
+				else if (tok.size() == 3)
+					return new Triplet(Material.valueOf(tok.get(0)), Integer.parseInt(tok.get(1)), Boolean.parseBoolean(tok.get(2)));
 				else
 					return null;
 			} catch (IllegalArgumentException e) {
@@ -370,8 +314,24 @@ public class AutoSmelt extends Modifier implements Listener {
 		}
 
 		@NotNull
+		@Override
 		public String toString() {
 			return material.toString() + regex + amount + regex + luckable;
 		}
+	}
+
+	private final PlayerConfigurationOption PARTICLES =
+			new PlayerConfigurationOption(this,"particles", PlayerConfigurationOption.Type.BOOLEAN,
+					LanguageManager.getString("Modifier.Propelling.PCO_particle"), true);
+
+	private final PlayerConfigurationOption SOUND =
+			new PlayerConfigurationOption(this,"sound", PlayerConfigurationOption.Type.BOOLEAN,
+					LanguageManager.getString("Modifier.Propelling.PCO_sound"), true);
+
+	@Override
+	public List<PlayerConfigurationOption> getPCIOptions() {
+		final ArrayList<PlayerConfigurationOption> playerConfigurationOptions = new ArrayList<>(List.of(PARTICLES, SOUND));
+		playerConfigurationOptions.sort(Comparator.comparing(PlayerConfigurationOption::displayName));
+		return playerConfigurationOptions;
 	}
 }

@@ -3,27 +3,13 @@ Alert.OnItemGrind: "%RED%No puedes usar la Afiladora en los items del MineTinker
 Alert.ToolUpgradeFailure: "%RED%Ha fallado el upgrade!"
 Alert.InternalError: "%RED%Un error interno ha ocurrido!"
 Alert.OnCooldown: "%RED%Esta habilidad aun tiene cooldown!"
-Alert.MinecraftAPI: ""
+Alert.MinecraftAPI: "%RED%Unable to connect to Minecrafts API!"
 
 StartUp.Commands: "¡Comandos registrados!"
-StartUp.BuildersWands: "¡Se han activado las varitas de construcción!"
-StartUp.EasyHarvest: "¡Se ha habilitado EasyHarvest!"
 StartUp.Events: "¡Eventos registrados!"
 StartUp.GUIs: "¡Cargando Interfaces de usuario!"
 StartUp.StdLogging: "¡El registro estándar ha sido activado. Puede deshabilitarlo en la configuración en Logging.Standard!"
 StartUp.DebugLogging: "¡El registro de depuración está habilitado. Usted puede deshabilitarlo en la configuración en Logging.Debug!"
-StartUp.Incompatible:
-  Start: "Iniciando la busqueda de Plugins incompatibles... ¡Puedes desactivar esta función en la configuración principal!"
-  Found: "Se encontró %plugin. ¡Ajustando MineTinker con la mejor compatibilidad!"
-
-Builderswand.Name.Wood: "Bastón constructor de Madera"
-Builderswand.Name.Stone: "Bastón constructor de Piedra"
-Builderswand.Name.Iron: "Bastón constructor de Hierro"
-Builderswand.Name.Gold: "Bastón constructor de Oro"
-Builderswand.Name.Diamond: "Bastón constructor de Diamante"
-Builderswand.Name.Netherite: ""
-Builderswand.Description: "%WHITE%Bastón constructor del MineTinker"
-Builderswand.Error: ""
 
 Commands.Info.Line1: "MineTinker (%ver) es un plugin hecho por Flo56958."
 Commands.Info.Line2: "Está inspirado en diferentes mods (e.j. Tinkers Construct)"
@@ -34,7 +20,6 @@ Commands.Reload.Note1: "NOTA: ¡Es posible que el plugin no funcione correctamen
 Commands.Reload.Recipes: "¡Limpiando recetas!"
 Commands.Reload.Configs: "¡Recargando configuraciones!"
 Commands.Reload.ModManager: "¡Recargando el ModManager!"
-Commands.Reload.Builderswands: "¡Recargando Builderwands!"
 Commands.Reload.GUIs: "¡Recargando las interfaces de usuario!"
 Commands.Reload.Finish: "¡Recarga terminada!"
 Commands.ModList: "Modificadores posibles:"
@@ -72,7 +57,8 @@ GUIs.Modifiers.IncompatibleWith: "Incompatible con:"
 GUIs.Modifiers.EnchantCost: "Costo de encantamiento: %WHITE%%enchantCost"
 GUIs.Modifiers.ClickToRecipe: "%key para mostrar la receta de elaboración."
 GUIs.Modifiers.BlockToEnchant: "%key con %mat sobre %block para encantar el objeto."
-GUIs.Modifiers.SlotCost: "Espacios libres necesarios por nivel:%amount"
+GUIs.Modifiers.SlotCost: "Free slots needed per level: %WHITE%%amount"
+GUIs.Modifiers.MinimumToolLevel: "Minimum Tool Level: %WHITE%%level"
 GUIs.ConfigurationEditor.ReloadPlugin: "Recargando MineTinker"
 GUIs.ConfigurationEditor.Change: "¡Cambiado %key de %old a %new!"
 GUIs.ConfigurationEditor.Type: "Tipo: %type"
@@ -97,6 +83,7 @@ GUIs.Statistics.Combat.TitlePage: "Estadísticas de combate de %tool - %pageNo"
 GUIs.Statistics.Combat.AmountKilled: "%amount veces asesinado"
 GUIs.Statistics.Combat.DamageDealt: "%amount daño repartido"
 GUIs.Statistics.Combat.DamageReceived: "%amount daño recibido"
+GUIs.Enchantable.Title: "Choose the Modifier to enchant:"
 
 GUIs.ConfigurationEditor.config.PluginIncompatibility.Check: "Permite la búsqueda de complementos incompatibles y MineTinker intenta reaccionar en consecuencia (por ejemplo, cambiar la configuración)"
 GUIs.ConfigurationEditor.config.PluginIncompatibility.SkippedPlugins: "Inhabilita la búsqueda de complementos específicos en esta lista"
@@ -120,6 +107,7 @@ ModifierFailCause.ModMaxLevel: "¡El modificador ya está al máximo nivel!"
 ModifierFailCause.NoFreeSlots: "No hay suficientes espacios libres en el item!"
 ModifierFailCause.NoPermission: "¡Sin permisos!"
 ModifierFailCause.PlayerFailure: "El jugador ha fallado aplicando el modificador!"
+ModifierFailCause.ToolLevelToLow: "Tool not enough leveled!"
 
 GrindStone.PossibleSlotsAfterGrind: "Posibles espacios disponibles despues de re-armar: %amount"
 
@@ -168,7 +156,6 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Demente"
   Channeling:
     Name: "Canalización"
-    Description: "¡Invoca un rayo cuando el tridente golpea a sus enemigos!"
     ModifierItemName: "Fragmento infundido de relámpagos"
     DescriptionModifierItem: "Item para el modificador Canalización"
   Directing:
@@ -194,12 +181,10 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Esquiva"
   Experienced:
     Name: "Experimentado"
-    Description: "¡La herramienta tiene una probabilidad del %chance% por nivel para dropear %amount de XP mientras se usa!"
     ModifierItemName: "Esencia de Experiencia"
     DescriptionModifierItem: "Item para el modificador Experimentado"
   Extra-Modifier:
     Name: "Modificador-Extra"
-    Description: "¡Añade %amount hueco adicional para modificadores en la herramienta!"
     ModifierItemName: "Estrella del Nether Refinada"
     DescriptionModifierItem: "Item para el modificador Modificador Extra"
   Fiery:
@@ -229,7 +214,6 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Prisa"
   Infinity:
     Name: "Infinidad"
-    Description: "¡Solo necesitas una flecha para disparar un arco y el Tridente vuelve a ti!"
     ModifierItemName: "Flecha encantada"
     DescriptionModifierItem: "Item para el modificador Infinidad"
   Insulating:
@@ -264,7 +248,6 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Suerte"
   Magical:
     Name: "Mágico"
-    Description: "¡Dispara un orbe mágico que no es afectado por la gravedad pero vuela un %amount% más lento! ¡Si el orbe golpea al objetivo hará de %min% a %max% más daño (dependiendo del nivel)! ¡Cuesta %xp de XP por disparo!"
     ModifierItemName: "Flecha mágica"
     DescriptionModifierItem: "Item para el modificador Mágico"
   Melting:
@@ -274,9 +257,13 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Derretir"
   Multishot:
     Name: "Multi-disparo"
-    Description: "Dispara una flecha extra por nivel por disparo"
     ModifierItemName: "Múlti-Flecha"
     DescriptionModifierItem: "Item para el modificador Disparo múltiple"
+  Multijump:
+    Name: "Multijump"
+    Description: "Jump one extra time per Level!"
+    ModifierItemName: "Magic Rabbit Foot"
+    DescriptionModifierItem: "Modifier-Item for the Multijump-Modifier"
   Nightseeker:
     Name: "Nocturno"
     Description: "Hace más daño o recibe menos (%amountmin% hasta %amountmax%) cuando la luna se alza (esto depende de su posición en el cielo). Esto se invierte durante el día y en el Nether, pero se activa al máximo en el End!"
@@ -284,7 +271,6 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Nocturno"
   Photosynthesis:
     Name: "Fotosíntesis"
-    Description: "Repara tus objetos con %amount de durabilidad por nivel cada %ticks Ticks cuando estás en el brillo del sol. Cuanto más tiempo te quedes quieto, más rápido se reparará. (%multiplier%)"
     ModifierItemName: "Clorofila Extraída"
     DescriptionModifierItem: "Item para el modificador Fotosíntesis"
   Piercing:
@@ -324,7 +310,6 @@ Modifier:
     DescriptionModifierItem: "Item para el modificador Escotópico"
   Shadow-Dive:
     Name: "Buceo en las Sombras"
-    Description: "Desapareces completamente cuando te agachas en sitios oscuros! (Nivel de luz <= %level)"
     ModifierItemName: "Cristal de la desaparición"
     DescriptionModifierItem: "Item para el modificador Cristal de la desaparición"
     LightToHigh: "El nivel de luz es demasiado alto!"

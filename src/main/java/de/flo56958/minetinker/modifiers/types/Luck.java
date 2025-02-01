@@ -22,16 +22,17 @@ public class Luck extends Modifier {
 	private static Luck instance;
 
 	static {
-		applicableEnchants.put(ToolType.AXE, Arrays.asList(Enchantment.LOOT_BONUS_BLOCKS, Enchantment.LOOT_BONUS_MOBS));
-		applicableEnchants.put(ToolType.BOW, Collections.singletonList(Enchantment.LOOT_BONUS_MOBS));
-		applicableEnchants.put(ToolType.CROSSBOW, Collections.singletonList(Enchantment.LOOT_BONUS_MOBS));
-		applicableEnchants.put(ToolType.HOE, Collections.singletonList(Enchantment.LOOT_BONUS_BLOCKS));
-		applicableEnchants.put(ToolType.TRIDENT, Collections.singletonList(Enchantment.LOOT_BONUS_MOBS));
-		applicableEnchants.put(ToolType.PICKAXE, Collections.singletonList(Enchantment.LOOT_BONUS_BLOCKS));
-		applicableEnchants.put(ToolType.SHOVEL, Collections.singletonList(Enchantment.LOOT_BONUS_BLOCKS));
-		applicableEnchants.put(ToolType.SWORD, Collections.singletonList(Enchantment.LOOT_BONUS_MOBS));
-		applicableEnchants.put(ToolType.SHEARS, Collections.singletonList(Enchantment.LOOT_BONUS_BLOCKS));
-		applicableEnchants.put(ToolType.FISHINGROD, Collections.singletonList(Enchantment.LUCK));
+		applicableEnchants.put(ToolType.AXE, Arrays.asList(Enchantment.FORTUNE, Enchantment.LOOTING));
+		applicableEnchants.put(ToolType.BOW, Collections.singletonList(Enchantment.LOOTING));
+		applicableEnchants.put(ToolType.CROSSBOW, Collections.singletonList(Enchantment.LOOTING));
+		applicableEnchants.put(ToolType.HOE, Collections.singletonList(Enchantment.FORTUNE));
+		applicableEnchants.put(ToolType.TRIDENT, Collections.singletonList(Enchantment.LOOTING));
+		applicableEnchants.put(ToolType.PICKAXE, Collections.singletonList(Enchantment.FORTUNE));
+		applicableEnchants.put(ToolType.SHOVEL, Collections.singletonList(Enchantment.FORTUNE));
+		applicableEnchants.put(ToolType.SWORD, Collections.singletonList(Enchantment.LOOTING));
+		applicableEnchants.put(ToolType.SHEARS, Collections.singletonList(Enchantment.FORTUNE));
+		applicableEnchants.put(ToolType.MACE, Collections.singletonList(Enchantment.LOOTING));
+		applicableEnchants.put(ToolType.FISHINGROD, Collections.singletonList(Enchantment.LUCK_OF_THE_SEA));
 	}
 
 	private Luck() {
@@ -56,12 +57,12 @@ public class Luck extends Modifier {
 	@Override
 	public List<ToolType> getAllowedTools() {
 		return Arrays.asList(ToolType.AXE, ToolType.BOW, ToolType.CROSSBOW, ToolType.HOE, ToolType.PICKAXE, ToolType.SHEARS,
-				ToolType.FISHINGROD, ToolType.SHOVEL, ToolType.SWORD, ToolType.TRIDENT);
+				ToolType.FISHINGROD, ToolType.SHOVEL, ToolType.SWORD, ToolType.TRIDENT, ToolType.MACE);
 	}
 
 	@Override
 	public @NotNull List<Enchantment> getAppliedEnchantments() {
-		return Arrays.asList(Enchantment.LOOT_BONUS_BLOCKS, Enchantment.LOOT_BONUS_MOBS, Enchantment.LUCK);
+		return Arrays.asList(Enchantment.FORTUNE, Enchantment.LOOTING, Enchantment.LUCK_OF_THE_SEA);
 	}
 
 	@Override

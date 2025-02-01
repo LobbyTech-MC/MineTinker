@@ -18,6 +18,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
@@ -59,7 +60,7 @@ public class EntityListener implements Listener {
 //        }
 
 		if (!modManager.isToolViable(tool)) return;
-		if (!modManager.durabilityCheck(event, player, tool)) return;
+		if (!modManager.durabilityCheck(event, player, tool, true)) return;
 
 		Bukkit.getPluginManager().callEvent(new MTEntityDamageByEntityEvent(player, tool, event.getEntity(), event));
 
@@ -175,7 +176,7 @@ public class EntityListener implements Listener {
 			tool = player.getInventory().getItemInOffHand(); // Fishing rods can also be thrown in offhand
 
 		// get reference from bow shoot
-		if(event.getEntity().hasMetadata(MineTinker.getPlugin().getName() + "item")) {
+		if (event.getEntity().hasMetadata(MineTinker.getPlugin().getName() + "item")) {
 			List<MetadataValue> tools = event.getEntity().getMetadata(MineTinker.getPlugin().getName() + "item");
 			if (tools.isEmpty()) return;
 			FixedMetadataValue obj = (FixedMetadataValue) tools.get(0);
@@ -198,14 +199,13 @@ public class EntityListener implements Listener {
 		}
 
 		if (!modManager.isToolViable(tool)) return;
-
-		if (!modManager.durabilityCheck(event, player, tool)) return;
+		if (!modManager.durabilityCheck(event, player, tool, true)) return;
 
 		if (!ToolType.FISHINGROD.contains(tool.getType())) // Disable Exp for spam clicking
 			modManager.addExp(player, tool, MineTinker.getPlugin().getConfig().getInt("ExpPerArrowShot"), true);
 
 		// add item reference to arrow
-		if(!event.getEntity().hasMetadata(MineTinker.getPlugin().getName() + "item"))
+		if (!event.getEntity().hasMetadata(MineTinker.getPlugin().getName() + "item"))
 			event.getEntity().setMetadata(MineTinker.getPlugin().getName() + "item",
 					new FixedMetadataValue(MineTinker.getPlugin(), tool));
 
@@ -244,10 +244,21 @@ public class EntityListener implements Listener {
 
 	private boolean playSound(final EntityShootBowEvent event, final Player player, final ItemStack offHand) {
 		final Modifier mod = modManager.getModifierFromItem(offHand);
-        if (mod == null || mod.getModItem().getType() != Material.ARROW) return false;
+		if (mod == null || mod.getModItem().getType() != Material.ARROW) return false;
 
-        event.setCancelled(true);
-        player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
-        return true;
-    }
+		event.setCancelled(true);
+		player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 1.0f, 1.0f);
+		return true;
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onShear(@NotNull final PlayerShearEntityEvent event) {
+		final Player player = event.getPlayer();
+		// event.getItem() seems to be a copy of the item and not the real item
+		final ItemStack shears = player.getInventory().getItem(event.getHand());
+
+		if (!modManager.isToolViable(shears)) return;
+
+		modManager.addExp(player, shears, MineTinker.getPlugin().getConfig().getInt("ExpPerBlockBreak", 1), true);
+	}
 }

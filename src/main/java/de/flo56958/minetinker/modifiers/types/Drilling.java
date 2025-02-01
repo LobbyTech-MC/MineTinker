@@ -2,13 +2,17 @@ package de.flo56958.minetinker.modifiers.types;
 
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.MTBlockBreakEvent;
-import de.flo56958.minetinker.data.Lists;
+import de.flo56958.minetinker.api.events.MTPlayerInteractEvent;
 import de.flo56958.minetinker.data.ToolType;
-import de.flo56958.minetinker.modifiers.Modifier;
+import de.flo56958.minetinker.modifiers.PlayerConfigurableModifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
+import de.flo56958.minetinker.utils.LanguageManager;
 import de.flo56958.minetinker.utils.data.DataHandler;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationOption;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,16 +21,21 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Drilling extends Modifier implements Listener {
+public class Drilling extends PlayerConfigurableModifier implements Listener {
 
-	public static final ConcurrentHashMap<Location, Integer> events = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<Location, Integer> events_break = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<Location, Integer> events_interact = new ConcurrentHashMap<>();
+
 	private static Drilling instance;
 	private HashSet<Material> blacklist = new HashSet<>();
 	private boolean treatAsWhitelist;
@@ -53,7 +62,7 @@ public class Drilling extends Modifier implements Listener {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-		return Arrays.asList(ToolType.AXE, ToolType.PICKAXE, ToolType.SHOVEL);
+		return Arrays.asList(ToolType.AXE, ToolType.PICKAXE, ToolType.SHOVEL, ToolType.HOE, ToolType.SHEARS);
 	}
 
 	@Override
@@ -84,9 +93,12 @@ public class Drilling extends Modifier implements Listener {
 
 		config.addDefault("Recipe.Materials", recipeMaterials);
 
-		List<String> blacklistTemp = new ArrayList<>();
+		final Set<String> blacklistTemp = new HashSet<>();
 
-		blacklistTemp.add(Material.AIR.name());
+		for (Material value : Material.values()) {
+			if (value.isAir())
+				blacklistTemp.add(value.name());
+		}
 		blacklistTemp.add(Material.BEDROCK.name());
 		blacklistTemp.add(Material.WATER.name());
 		blacklistTemp.add(Material.BUBBLE_COLUMN.name());
@@ -96,7 +108,7 @@ public class Drilling extends Modifier implements Listener {
 		blacklistTemp.add(Material.END_PORTAL_FRAME.name());
 		blacklistTemp.add(Material.NETHER_PORTAL.name());
 
-		config.addDefault("Blacklist", blacklistTemp);
+		config.addDefault("Blacklist", new ArrayList<>(blacklistTemp));
 		config.addDefault("TreatAsWhitelist", false);
 
 		ConfigurationManager.saveConfig(config);
@@ -111,73 +123,116 @@ public class Drilling extends Modifier implements Listener {
 
 		final List<String> blacklistConfig = config.getStringList("Blacklist");
 		blacklist.addAll(blacklistConfig.stream().map(Material::getMaterial).toList());
+
+		CLAMP_LEVEL = new PlayerConfigurationOption(this, "clamp-to-level", PlayerConfigurationOption.Type.INTEGER,
+				LanguageManager.getString("Modifier.Power.PCO_clamp_level"), this.getMaxLvl());
 	}
 
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	public boolean canUseDrilling(Player player, ItemStack tool, Location loc) {
 		if (!player.hasPermission(getUsePermission())) return false;
-		if (events.remove(loc, 0)) return false;
 		if (toggleable && player.isSneaking()) return false;
 
 		return modManager.hasMod(tool, this);
 	}
 
 	@EventHandler(ignoreCancelled = true)
-	public void effect(WorldSaveEvent e) {
-		if (Bukkit.getOnlinePlayers().isEmpty())
-			events.clear();
+	public void effect(@NotNull final WorldSaveEvent event) {
+		events_break.clear();
+		events_interact.clear();
 	}
 
-	/**
-	 * The effect when a Block was brocken
-	 *
-	 * @param event The Event
-	 */
+	// No ignoreCancelled as Building will cancel Drilling
+	@EventHandler
+	public void effect(@NotNull final MTPlayerInteractEvent event) {
+		final Player player = event.getPlayer();
+		final ItemStack tool = event.getTool();
+		final Block block = event.getEvent().getClickedBlock();
+		if (block == null) return;
+		if (events_interact.remove(block.getLocation(), 0)) return; // check first to clear map
+		if (block.getType().isAir()) return; // does not work with air
+		if (block.isLiquid()) return; // does not work with liquids
+
+		if (!canUseDrilling(player, tool, block.getLocation())) return;
+
+		BlockFace face = event.getEvent().getBlockFace();
+		if (event.getEvent().getAction() == Action.RIGHT_CLICK_BLOCK && modManager.hasMod(tool, Building.instance()))
+			face = face.getOppositeFace();
+
+		final boolean power = modManager.hasMod(tool, Power.instance());
+
+		final int level = Math.min(modManager.getModLevel(tool, this), PlayerConfigurationManager.getInstance().getInteger(player, CLAMP_LEVEL));
+		final BlockFace finalFace = face.getOppositeFace();
+		for (int i = 1; i <= level; i++) {
+			final Block b = block.getRelative(finalFace, i);
+			if (block.getType().isAir()) break;
+			if (block.isLiquid()) break;
+			if (events_interact.putIfAbsent(b.getLocation(), 0) != null) break;
+
+			if (power)
+				Power.events_interact.putIfAbsent(b.getLocation(), 0);
+
+			Bukkit.getPluginManager().callEvent(
+					new PlayerInteractEvent(player, event.getEvent().getAction(), tool, b, event.getEvent().getBlockFace()));
+		}
+	}
+
 	@EventHandler(ignoreCancelled = true)
-	public void effect(MTBlockBreakEvent event) {
+	public void effect(@NotNull final MTBlockBreakEvent event) {
 		final Player player = event.getPlayer();
 		final ItemStack tool = event.getTool();
 		final Block block = event.getBlock();
+		if (events_break.remove(block.getLocation(), 0)) return; // check first to clear map
+		if (blacklist.contains(block.getType())) return;
+		if (block.getType().isAir()) return; // does not work with air
+		if (block.isLiquid()) return; // does not work with liquids
 		if (!canUseDrilling(player, tool, block.getLocation())) return;
 
-		final int level = modManager.getModLevel(tool, this);
+		final int level = Math.min(modManager.getModLevel(tool, this), PlayerConfigurationManager.getInstance().getInteger(player, CLAMP_LEVEL));
 
 		// Check if power save the old correct blockface
 		BlockFace face = Power.drillingCommunication.remove(block.getLocation());
 		boolean usedPowerCommunication = true;
-		if (!(modManager.hasMod(tool, Power.instance()) && face != null)) {
-			face = Lists.BLOCKFACE.get(player);
+		final boolean power = modManager.hasMod(tool, Power.instance());
+		if (face == null) {
+			face = event.getBlockFace();
 			usedPowerCommunication = false;
 		}
 
 		final float hardness = block.getType().getHardness();
 
 		final BlockFace finalFace = face.getOppositeFace();
-		Bukkit.getScheduler().runTask(this.getSource(), () -> {
-			for (int i = 1; i <= level; i++) {
-				if (!drillingBlockBreak(block.getRelative(finalFace, i),
-						hardness, player, tool)) break;
-			}
-		});
-
+		for (int i = 1; i <= level; i++) {
+			if (!drillingBlockBreak(block.getRelative(finalFace, i),
+					hardness, player, tool, power)) break;
+		}
 		ChatWriter.logModifier(player, event, this, tool,
 				"Block(" + block.getType() + ")",
 				"Blockface(" + face + (usedPowerCommunication ? "[Power]" : "") + ")");
 	}
 
-	private boolean drillingBlockBreak(final Block block, final float centralBlockHardness, final Player player, final ItemStack tool) {
+	private boolean drillingBlockBreak(final Block block, final float centralBlockHardness, final Player player, final ItemStack tool, final boolean power) {
+		if (block == null) return false;
 		if (treatAsWhitelist ^ blacklist.contains(block.getType())) return false;
+		if (block.getType().isAir()) return false;
 		if (block.getDrops(player.getInventory().getItemInMainHand()).isEmpty()) return false;
 		//So Obsidian can not be mined using Cobblestone and Drilling
-		if (block.getType().getHardness() > centralBlockHardness + 2) return false;
+		if (player.getGameMode() != GameMode.CREATIVE && block.getType().getHardness() > centralBlockHardness + 2) return false;
 
 		try {
-			events.put(block.getLocation(), 0);
-			if (modManager.hasMod(tool, Power.instance()))
-				Power.events.put(block.getLocation(), 0);
+			events_break.putIfAbsent(block.getLocation(), 0);
+			if (power)
+				Power.events_break.putIfAbsent(block.getLocation(), 0);
 			return DataHandler.playerBreakBlock(player, block, tool);
 		} catch (IllegalArgumentException ignored) {
 			return false;
 		}
+	}
+
+	private PlayerConfigurationOption CLAMP_LEVEL;
+
+	@Override
+	public List<PlayerConfigurationOption> getPCIOptions() {
+		return List.of(CLAMP_LEVEL);
 	}
 }

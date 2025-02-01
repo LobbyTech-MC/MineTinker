@@ -5,6 +5,8 @@ import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.*;
 import de.flo56958.minetinker.modifiers.ModManager;
 import de.flo56958.minetinker.modifiers.Modifier;
+import de.flo56958.minetinker.utils.playerconfig.GeneralPCOptions;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -114,7 +116,7 @@ public class ChatWriter {
 	}
 
 	public static void logModifier(final @NotNull Player p, final @Nullable Event event, final @NotNull Modifier mod, final @NotNull ItemStack tool, String... args) {
-		if (!(MineTinker.getPlugin().getConfig().getBoolean("logging.modifiers"))) return;
+		if (!MineTinker.getPlugin().getConfig().getBoolean("logging.modifiers")) return;
 
 		//Example: 0x00FF: Flo56958/Melting - DIAMOND_CHESTPLATE - Damage(30 -> 20)
 		final StringBuilder sb = new StringBuilder();
@@ -152,52 +154,49 @@ public class ChatWriter {
 	/**
 	 * Sends a message to the players actionbar
 	 *
-	 * @param player The player to send the message to
+	 * @param player  The player to send the message to
 	 * @param message The content of the message
 	 */
 	public static void sendActionBar(final Player player, final String message) {
 		//Extract from the source code of the Actionbar-API (altered)
-		if (!MineTinker.getPlugin().getConfig().getBoolean("actionbar-messages")) {
-			return;
-		}
-
 		if (player == null || !player.isOnline()) {
 			return; // Player may have logged out, unlikely but possible?
 		}
 
+		if (!PlayerConfigurationManager.getInstance().getBoolean(player, GeneralPCOptions.INSTANCE.ACTIONBAR_MESSAGES)) {
+			return;
+		}
+
 		try {
 			player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-					TextComponent.fromLegacyText(message));
-		} catch (NoSuchMethodError e) {
-			ChatWriter.logError("You have Spigot features enabled but don't use Spigot." +
-					"Please turn off actionbar-messages in the main config.");
-		}
+					TextComponent.fromLegacy(message));
+		} catch (NoSuchMethodError ignored) {}
 	}
 
 	@NotNull
 	public static String addColors(final @NotNull String input) {
 		return input.replaceAll("%BLACK%", ChatColor.BLACK.toString())
-			.replaceAll("%DARK_BLUE%", ChatColor.DARK_BLUE.toString())
-			.replaceAll("%DARK_GREEN%", ChatColor.DARK_GREEN.toString())
-			.replaceAll("%DARK_AQUA%", ChatColor.DARK_AQUA.toString())
-			.replaceAll("%DARK_RED%", ChatColor.DARK_RED.toString())
-			.replaceAll("%DARK_PURPLE%", ChatColor.DARK_PURPLE.toString())
-			.replaceAll("%GOLD%", ChatColor.GOLD.toString())
-			.replaceAll("%GRAY%", ChatColor.GRAY.toString())
-			.replaceAll("%DARK_GRAY%", ChatColor.DARK_GRAY.toString())
-			.replaceAll("%BLUE%", ChatColor.BLUE.toString())
-			.replaceAll("%GREEN%", ChatColor.GREEN.toString())
-			.replaceAll("%AQUA%", ChatColor.AQUA.toString())
-			.replaceAll("%RED%", ChatColor.RED.toString())
-			.replaceAll("%LIGHT_PURPLE%", ChatColor.LIGHT_PURPLE.toString())
-			.replaceAll("%YELLOW%", ChatColor.YELLOW.toString())
-			.replaceAll("%WHITE%", ChatColor.WHITE.toString())
-			.replaceAll("%BOLD%", ChatColor.BOLD.toString())
-			.replaceAll("%UNDERLINE%", ChatColor.UNDERLINE.toString())
-			.replaceAll("%ITALIC%", ChatColor.ITALIC.toString())
-			.replaceAll("%STRIKE%", ChatColor.STRIKETHROUGH.toString())
-			.replaceAll("%MAGIC%", ChatColor.MAGIC.toString())
-			.replaceAll("%RESET%", ChatColor.RESET.toString());
+				.replaceAll("%DARK_BLUE%", ChatColor.DARK_BLUE.toString())
+				.replaceAll("%DARK_GREEN%", ChatColor.DARK_GREEN.toString())
+				.replaceAll("%DARK_AQUA%", ChatColor.DARK_AQUA.toString())
+				.replaceAll("%DARK_RED%", ChatColor.DARK_RED.toString())
+				.replaceAll("%DARK_PURPLE%", ChatColor.DARK_PURPLE.toString())
+				.replaceAll("%GOLD%", ChatColor.GOLD.toString())
+				.replaceAll("%GRAY%", ChatColor.GRAY.toString())
+				.replaceAll("%DARK_GRAY%", ChatColor.DARK_GRAY.toString())
+				.replaceAll("%BLUE%", ChatColor.BLUE.toString())
+				.replaceAll("%GREEN%", ChatColor.GREEN.toString())
+				.replaceAll("%AQUA%", ChatColor.AQUA.toString())
+				.replaceAll("%RED%", ChatColor.RED.toString())
+				.replaceAll("%LIGHT_PURPLE%", ChatColor.LIGHT_PURPLE.toString())
+				.replaceAll("%YELLOW%", ChatColor.YELLOW.toString())
+				.replaceAll("%WHITE%", ChatColor.WHITE.toString())
+				.replaceAll("%BOLD%", ChatColor.BOLD.toString())
+				.replaceAll("%UNDERLINE%", ChatColor.UNDERLINE.toString())
+				.replaceAll("%ITALIC%", ChatColor.ITALIC.toString())
+				.replaceAll("%STRIKE%", ChatColor.STRIKETHROUGH.toString())
+				.replaceAll("%MAGIC%", ChatColor.MAGIC.toString())
+				.replaceAll("%RESET%", ChatColor.RESET.toString());
 	}
 
 	public static ChatColor getColor(final @NotNull String input)

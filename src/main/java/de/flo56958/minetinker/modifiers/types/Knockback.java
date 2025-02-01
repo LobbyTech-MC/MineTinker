@@ -47,12 +47,12 @@ public class Knockback extends Modifier implements Listener {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-			return Arrays.asList(ToolType.AXE, ToolType.BOW, ToolType.SWORD, ToolType.SHIELD, ToolType.TRIDENT);
+		return Arrays.asList(ToolType.AXE, ToolType.BOW, ToolType.SWORD, ToolType.SHIELD, ToolType.TRIDENT, ToolType.MACE);
 	}
 
 	@Override
 	public @NotNull List<Enchantment> getAppliedEnchantments() {
-		return Arrays.asList(Enchantment.KNOCKBACK, Enchantment.ARROW_KNOCKBACK);
+		return Arrays.asList(Enchantment.KNOCKBACK, Enchantment.PUNCH);
 	}
 
 	@Override
@@ -83,10 +83,10 @@ public class Knockback extends Modifier implements Listener {
 		ItemMeta meta = tool.getItemMeta();
 
 		if (meta != null) {
-			if (ToolType.AXE.contains(tool.getType()) || ToolType.SWORD.contains(tool.getType()) || ToolType.TRIDENT.contains(tool.getType()))
+			if (ToolType.BOW.contains(tool.getType()) || ToolType.CROSSBOW.contains(tool.getType()))
+				meta.addEnchant(Enchantment.PUNCH, modManager.getModLevel(tool, this), true);
+			else if (!ToolType.SHIELD.contains(tool.getType()))
 				meta.addEnchant(Enchantment.KNOCKBACK, modManager.getModLevel(tool, this), true);
-			else if (ToolType.BOW.contains(tool.getType()) || ToolType.CROSSBOW.contains(tool.getType()))
-				meta.addEnchant(Enchantment.ARROW_KNOCKBACK, modManager.getModLevel(tool, this), true);
 			//Shields do not get the enchant
 
 			tool.setItemMeta(meta);

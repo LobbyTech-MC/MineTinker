@@ -59,7 +59,7 @@ public class Withered extends Modifier implements Listener {
 	@Override
 	public List<ToolType> getAllowedTools() {
 		return Arrays.asList(ToolType.AXE, ToolType.BOW, ToolType.CROSSBOW, ToolType.SWORD, ToolType.TRIDENT,
-				ToolType.HELMET, ToolType.CHESTPLATE, ToolType.LEGGINGS, ToolType.BOOTS, ToolType.ELYTRA);
+				ToolType.HELMET, ToolType.CHESTPLATE, ToolType.LEGGINGS, ToolType.BOOTS, ToolType.ELYTRA, ToolType.MACE);
 	}
 
 	@Override
@@ -144,7 +144,7 @@ public class Withered extends Modifier implements Listener {
 		if (damage > 0) {
 			event.setDamage(0);
 			double health = player.getHealth();
-			player.setHealth(Math.min(health + damage, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()));
+			player.setHealth(Math.min(health + damage, player.getAttribute(Attribute.MAX_HEALTH).getValue()));
 			ChatWriter.logModifier(player, event, this, armor, String.format("Health(%.2f -> %.2f)", health, player.getHealth()));
 		}
 	}

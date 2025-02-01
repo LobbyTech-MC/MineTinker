@@ -7,7 +7,7 @@ prefix: MineTinker
 description: @project.description@
 website: @project.url@
 database: false
-api-version: "1.14"
+api-version: "1.21"
 
 softdepend: [ProtocolLib, ChanLang]
 
@@ -24,10 +24,8 @@ permissions:
     children:
       minetinker.commands.*: true
       minetinker.modifiers.*: true
-      minetinker.builderswands.*: true
       minetinker.tool.*: true
       minetinker.update.*: true
-      minetinker.easyharvest.*: true
 
   minetinker.tool.*:
     children:
@@ -72,6 +70,7 @@ permissions:
       minetinker.commands.editconfig: true
       minetinker.commands.editconfigbroadcast: true
       minetinker.commands.reload: true
+      minetinker.commands.playerconfiguration: true
 
   minetinker.commands.main:
     description: Allows to access MineTinker Commands entirely. Is necessary for every command.
@@ -182,6 +181,10 @@ permissions:
     description: Notifies player about updates when they login
     default: op
 
+  minetinker.commands.playerconfiguration:
+    description: Allows to access the player configuration
+    default: true
+
   #Modifiers:
   minetinker.modifiers.*:
     children:
@@ -191,7 +194,9 @@ permissions:
       minetinker.modifiers.autosmelt.*: true
       minetinker.modifiers.beheading.*: true
       minetinker.modifiers.berserk.*: true
+      minetinker.modifiers.building.*: true
       minetinker.modifiers.channeling.*: true
+      minetinker.modifiers.dense.*: true
       minetinker.modifiers.directing.*: true
       minetinker.modifiers.drilling.*: true
       minetinker.modifiers.echoing.*: true
@@ -332,6 +337,21 @@ permissions:
     description: Allows to use Echoing on a MineTinker-Helmet
     default: true
 
+  minetinker.modifiers.building.*:
+    children:
+      minetinker.modifiers.building.apply: true
+      minetinker.modifiers.building.use: true
+      minetinker.modifiers.building.craft: true
+  minetinker.modifiers.building.craft:
+    description: Allows to craft the Building-Modifier
+    default: true
+  minetinker.modifiers.building.apply:
+    description: Allows to apply Building to a MineTinker-Tool
+    default: true
+  minetinker.modifiers.building.use:
+    description: Allows to use Building on a MineTinker-Tool
+    default: true
+
   minetinker.modifiers.undead.*:
     children:
       minetinker.modifiers.undead.apply: true
@@ -427,6 +447,13 @@ permissions:
     default: true
   minetinker.modifiers.directing.use:
     description: Allows to use Directing on a MineTinker-Tool
+    default: true
+
+  minetinker.modifiers.dense.*:
+    children:
+      minetinker.modifiers.dense.apply: true
+  minetinker.modifiers.dense.apply:
+    description: Allows to apply Dense to a MineTinker-Tool
     default: true
 
   minetinker.modifiers.drilling.*:
@@ -1006,24 +1033,4 @@ permissions:
     default: true
   minetinker.modifiers.zealous.craft:
     description: Allows to craft a Zealous-Modifiers
-    default: true
-
-  #Builderswands:
-  minetinker.builderswands.*:
-    children:
-      minetinker.builderswands.use: true
-  minetinker.builderswands.use:
-    description: Allows to use the Builderswands of MineTinker
-    default: true
-
-  #EasyHarvest
-  minetinker.easyharvest.*:
-    children:
-      minetinker.easyharvest.use: true
-      minetinker.easyharvest.replant: true
-  minetinker.easyharvest.use:
-    description: Allows usage of the EasyHarvest feature
-    default: true
-  minetinker.easyharvest.replant:
-    description: Automatically replant crops when using EasyHarvest
     default: true

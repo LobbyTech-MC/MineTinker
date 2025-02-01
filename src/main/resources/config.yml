@@ -13,8 +13,6 @@ logging:
 
 #--MESSAGES--
 chat-messages: true                   #Will turn off command output
-actionbar-messages: true              #Will enable/disable actionbar messages
-actionbar-on-exp-gain: false
 BroadcastConfigChanges: true          #Broadcast config changes via /mt ec to players with same privileges
 LanguageManagerNotifyOP: true         #Should the LanguageManager notify the server operators if the language settings might be wrong or incomplete
 
@@ -31,6 +29,7 @@ ResetAtVarOverflow: true              #Resets Level and Exp at Integer.MAX_VALUE
 ExpPerBlockBreak: 1                   #How much XP will the tool get when you break a block
 ExpPerEntityHit: 1                    #How much XP will the tool get when you hit a Entity with Sword / Bow
 ExpPerArrowShot: 1                    #How much XP will the tool get when you shoot with the bow
+ExpChanceWhileFlying: 30              #Chance to get Exp while flying in percent
 DisableNonPvPDamageExpArmor: false    #Should Armor get Exp from non combat damage sources (Block breaking excluded)
 DisableNonPvPDamageExpWeapons: false  #Should Weapons get Exp from non combat damage sources (Block breaking excluded)
 ExtraExpPerBlock:                     #Extra Exp for block break
@@ -97,14 +96,13 @@ Grindstone:
   Enabled: true                       #Due to problems with grindstone and it's breaking mechanics you can disable it.
   ChanceToGetSlotsBack: 100           #Percentage; Should the tool get free slots back for every removed Modifier?
   ChanceToGetModifierItemBack: 100    #Percentage; Should the player get the possible used modification items back?
-UseSmithingTable: false               #Should players be able to modify and upgrade using the smithing table instead of the anvil?
 AllowEnchanting: false                #When enabled you can enchant the tools with vanilla methods (not recommended!)
 EnchantingCostsSlots: true            #When enchanted through the enchanting table or anvil (the vanilla way) should the tool need free slots
 AllowCrafting: true                   #Only recommended if used in combination with other Plugins that use the crafting grid for tools. If false: Tools are only acquired with give command
 AllowConverting: true                 #Allows you to convert tools by placing them in the crafting window
 BlockToEnchantModifiers: BOOKSHELF    #Block that needs to be right-clicked
 HideEnchants: true                    #Should the vanilla enchantments be hidden on the tool
-HideAttributes: true                  #Should the attributes be hidden on the tool when applied
+HideAttributes: false                 #Should the attributes be hidden on the tool when applied
 ConvertBookToModifier: true           #Should right-clicking a bookshelf with an enchanted book convert enchantments to modifier items
 EnableLore: true                      #Should the Item have lore to display all Stats on the Tool (like Modifiers, Exp, Level, etc.)
 ConvertEnchantmentsOnEnchant: true    #Should (new) enchantments be converted to modifiers when tools are enchanted

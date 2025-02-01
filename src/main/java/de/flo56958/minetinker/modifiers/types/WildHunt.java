@@ -1,5 +1,6 @@
 package de.flo56958.minetinker.modifiers.types;
 
+import com.google.common.base.Splitter;
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.MTEntityDeathEvent;
 import de.flo56958.minetinker.data.ToolType;
@@ -54,7 +55,7 @@ public class WildHunt extends Modifier implements Listener {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-		return Arrays.asList(ToolType.AXE, ToolType.SWORD, ToolType.BOW, ToolType.CROSSBOW);
+		return Arrays.asList(ToolType.AXE, ToolType.SWORD, ToolType.BOW, ToolType.CROSSBOW, ToolType.MACE);
 	}
 
 	@Override
@@ -99,6 +100,7 @@ public class WildHunt extends Modifier implements Listener {
 													new Tupel(Material.FERMENTED_SPIDER_EYE, Material.SPIDER_EYE),
 													new Tupel(Material.BREWING_STAND, Material.GLASS_BOTTLE)));
 		conversions.put(EntityType.WITHER, List.of(new Tupel(Material.BEACON, Material.NETHER_STAR)));
+		conversions.put(EntityType.RABBIT, List.of(new Tupel(Material.RABBIT_FOOT, Material.RABBIT_HIDE)));
 
 		conversions.forEach((k, v) -> config.addDefault("Conversions." + k.toString(), v.stream().map(Tupel::toString).toList()));
 		conversions.clear();
@@ -118,7 +120,7 @@ public class WildHunt extends Modifier implements Listener {
 			final HashSet<Tupel> set = new HashSet<>(strings.stream().map(Tupel::fromString).toList());
 			set.remove(null);
 			if (set.isEmpty()) continue;
-			conversions.put(entity, new LinkedList<>(set));
+			conversions.put(entity, new ArrayList<>(set));
 		}
 	}
 
@@ -144,7 +146,7 @@ public class WildHunt extends Modifier implements Listener {
 			final Material replaces = q.replaces;
 			if (loot == null || replaces == null) continue;
 
-			final LinkedList<ItemStack> items = new LinkedList<>(drops);
+			final ArrayList<ItemStack> items = new ArrayList<>(drops);
 			items.removeIf(k -> k == null || k.getType() != replaces);
 
 			if (items.isEmpty()) continue;
@@ -197,9 +199,9 @@ public class WildHunt extends Modifier implements Listener {
 
 		@Nullable
 		static WildHunt.Tupel fromString(@NotNull String input) {
-			final String[] tok = input.split(regex);
+			final List<String> tok = Splitter.on(regex).splitToList(input);
 			try {
-				if (tok.length == 2) return new Tupel(Material.valueOf(tok[0]), Material.valueOf(tok[1]));
+				if (tok.size() == 2) return new Tupel(Material.valueOf(tok.get(0)), Material.valueOf(tok.get(1)));
 				else return null;
 			} catch (IllegalArgumentException e) {
 				return null;
@@ -212,6 +214,7 @@ public class WildHunt extends Modifier implements Listener {
 		}
 
 		@NotNull
+		@Override
 		public String toString() {
 			return material.toString() + regex + replaces;
 		}

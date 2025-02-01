@@ -40,12 +40,12 @@ public class Smite extends Modifier {
 
 	@Override
 	public List<ToolType> getAllowedTools() {
-		return Arrays.asList(ToolType.SWORD, ToolType.AXE);
+		return Arrays.asList(ToolType.SWORD, ToolType.AXE, ToolType.MACE);
 	}
 
 	@Override
 	public @NotNull List<Enchantment> getAppliedEnchantments() {
-		return Collections.singletonList(Enchantment.DAMAGE_UNDEAD);
+		return Collections.singletonList(Enchantment.SMITE);
 	}
 
 	@Override
@@ -86,8 +86,7 @@ public class Smite extends Modifier {
 		ItemMeta meta = tool.getItemMeta();
 
 		if (meta != null) {
-			if (ToolType.AXE.contains(tool.getType()) || ToolType.SWORD.contains(tool.getType()))
-				meta.addEnchant(Enchantment.DAMAGE_UNDEAD, modManager.getModLevel(tool, this), true);
+			meta.addEnchant(Enchantment.SMITE, modManager.getModLevel(tool, this), true);
 
 			tool.setItemMeta(meta);
 		}

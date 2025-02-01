@@ -38,18 +38,11 @@ public class Echoing extends Modifier implements Listener {
 	private int radiusPerLevel;
 
 	private void sendPacket(@NotNull final Player player, @NotNull final Entity entity, final byte value) {
-		PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
+		final PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
 		packet.getIntegers().write(0, entity.getEntityId());
+		packet.getDataValueCollectionModifier().write(0, List.of(
+				new WrappedDataValue(0, WrappedDataWatcher.Registry.get(Byte.class), value)));
 
-		if (!MineTinker.is19compatible) {
-			WrappedDataWatcher watcher = new WrappedDataWatcher();
-			watcher.setEntity(entity);
-			watcher.setObject(0, WrappedDataWatcher.Registry.get(Byte.class), value);
-			packet.getWatchableCollectionModifier().write(0, watcher.getWatchableObjects());
-		} else {
-			packet.getDataValueCollectionModifier().write(0, List.of(
-							new WrappedDataValue(0, WrappedDataWatcher.Registry.get(Byte.class), value)));
-		}
 		try {
 			protocolManager.sendServerPacket(player, packet);
 		} catch (Exception e) {
@@ -70,44 +63,6 @@ public class Echoing extends Modifier implements Listener {
 	}
 
 	private HashMap<Player, Collection<Entity>> entities = new HashMap<>();
-
-	private final Runnable runnable = () -> {
-		for (Player player : Bukkit.getOnlinePlayers()) {
-			if (!player.hasPermission(getUsePermission())) {
-				revert(player);
-				continue;
-			}
-
-			final ItemStack helmet = player.getInventory().getHelmet();
-			if (!modManager.isArmorViable(helmet)) {
-				revert(player);
-				continue;
-			}
-			if (!modManager.hasMod(helmet, this)) {
-				revert(player);
-				continue;
-			}
-
-			int radius = this.radiusPerLevel * modManager.getModLevel(helmet, this);
-			Collection<Entity> entities = player.getWorld().getNearbyEntities(player.getLocation(), radius, radius, radius);
-			Collection<Entity> entities_wide = player.getWorld().getNearbyEntities(player.getLocation(), radius * 2, radius * 2, radius * 2);
-			entities_wide.removeAll(entities);
-
-			this.entities.put(player, entities);
-
-			for (final Entity ent : entities) {
-				if (ent.isGlowing()) continue;
-				if (ent.equals(player)) continue;
-
-				sendPacket(player, ent, (byte) 0x40); // Glowing is 0x40
-			}
-
-			for (Entity ent : entities_wide) {
-				if (ent.isGlowing()) continue;
-				sendPacket(player, ent, (byte) 0x00);
-			}
-		}
-	};
 
 	private Echoing() {
 		super(MineTinker.getPlugin());
@@ -166,7 +121,43 @@ public class Echoing extends Modifier implements Listener {
 
 		if (isAllowed())
 			this.taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(this.getSource(),
-					this.runnable, 5 * 20L, tickTime);
+					() -> {
+						for (Player player : Bukkit.getOnlinePlayers()) {
+							if (!player.hasPermission(getUsePermission())) {
+								revert(player);
+								continue;
+							}
+
+							final ItemStack helmet = player.getInventory().getHelmet();
+							if (!modManager.isArmorViable(helmet)) {
+								revert(player);
+								continue;
+							}
+							if (!modManager.hasMod(helmet, this)) {
+								revert(player);
+								continue;
+							}
+
+							int radius = this.radiusPerLevel * modManager.getModLevel(helmet, this);
+							Collection<Entity> entities = player.getWorld().getNearbyEntities(player.getLocation(), radius, radius, radius);
+							Collection<Entity> entities_wide = player.getWorld().getNearbyEntities(player.getLocation(), radius * 2, radius * 2, radius * 2);
+							entities_wide.removeAll(entities);
+
+							this.entities.put(player, entities);
+
+							for (final Entity ent : entities) {
+								if (ent.isGlowing()) continue;
+								if (ent.equals(player)) continue;
+
+								sendPacket(player, ent, (byte) 0x40); // Glowing is 0x40
+							}
+
+							for (Entity ent : entities_wide) {
+								if (ent.isGlowing()) continue;
+								sendPacket(player, ent, (byte) 0x00);
+							}
+						}
+					}, 5 * 20L, tickTime);
 		else
 			this.taskID = -1;
 

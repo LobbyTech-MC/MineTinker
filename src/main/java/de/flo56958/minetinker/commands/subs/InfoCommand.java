@@ -6,7 +6,6 @@ import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.SubCommand;
 import de.flo56958.minetinker.api.gui.ButtonAction;
 import de.flo56958.minetinker.api.gui.GUI;
-import de.flo56958.minetinker.commands.ArgumentType;
 import de.flo56958.minetinker.data.GUIs;
 import de.flo56958.minetinker.data.contributor.Contributor;
 import de.flo56958.minetinker.utils.ChatWriter;
@@ -25,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -44,10 +44,10 @@ public class InfoCommand implements SubCommand {
 			Updater.checkOnline();
 			lore.add(ChatColor.GOLD + "Current Version: " + ChatColor.WHITE + MineTinker.getPlugin().getDescription().getVersion());
 			lore.add(ChatColor.GOLD + "Latest Version: "
-					+ ((Updater.hasUpdate()) ? ChatColor.RED : ChatColor.WHITE) + Updater.getOnlineVersion());
+					+ (Updater.hasUpdate() ? ChatColor.RED : ChatColor.WHITE) + Updater.getOnlineVersion());
 			//Obtain Information over GitHub API
 			try {
-				String cons = new Scanner(new URL("https://api.github.com/repos/Flo56958/MineTinker").openStream(),
+				String cons = new Scanner(new URI("https://api.github.com/repos/Flo56958/MineTinker").toURL().openStream(),
 						StandardCharsets.UTF_8).useDelimiter("\\A").next();
 				JsonObject json = JsonParser.parseString(cons).getAsJsonObject();
 				lore.add(ChatColor.GOLD + "Repository Owner: " + ChatColor.WHITE + json.get("owner").getAsJsonObject().get("login").getAsString());
@@ -56,7 +56,7 @@ public class InfoCommand implements SubCommand {
 				lore.add(ChatColor.GOLD + "Watchers: " + ChatColor.WHITE + json.get("subscribers_count").getAsInt());
 				lore.add(ChatColor.GOLD + "Open Issues: " + ChatColor.WHITE + json.get("open_issues_count").getAsInt());
 				lore.add(ChatColor.GOLD + "License: " + ChatColor.WHITE + json.get("license").getAsJsonObject().get("name").getAsString());
-			} catch (IOException e) {
+			} catch (IOException | URISyntaxException e) {
 				lore.add(ChatColor.RED + LanguageManager.getString("Commands.Info.Failure"));
 			}
 			meta.setLore(lore);
@@ -77,7 +77,7 @@ public class InfoCommand implements SubCommand {
 				GUI contributorGUI = new GUI(MineTinker.getPlugin());
 				{
 					int pageNo = 1;
-					ArrayList<Contributor> conlist = Contributor.getContributors();
+					List<Contributor> conlist = Contributor.getContributors();
 					GUI.Window contributors = contributorGUI.addWindow(Math.min(6, conlist.size() / 9 + 1),
 							LanguageManager.getString("Commands.Info.Contributors") + " #" + pageNo);
 					int i = 0;
@@ -135,11 +135,6 @@ public class InfoCommand implements SubCommand {
 	@Override
 	public @NotNull String getPermission() {
 		return "minetinker.commands.info";
-	}
-
-	@Override
-	public @NotNull Map<Integer, List<ArgumentType>> getArgumentsToParse() {
-		return new HashMap<>();
 	}
 
 	@Override

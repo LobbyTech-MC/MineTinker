@@ -110,13 +110,13 @@ public class Berserk extends Modifier implements Listener {
 		if (modifierLevel <= 0) return;
 
 		final double lifeAfterDamage = player.getHealth() - event.getFinalDamage();
-		AttributeInstance healthAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+		AttributeInstance healthAttr = player.getAttribute(Attribute.MAX_HEALTH);
 
 		double maxHealth = 20;
 		if (healthAttr != null) maxHealth = healthAttr.getValue();
 
 		if (player.getHealth() / maxHealth > trigger / 100.0 && lifeAfterDamage / maxHealth <= trigger / 100.0) {
-			player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, boostTime,
+			player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, boostTime,
 					modifierLevel - 1));
 			ChatWriter.logModifier(player, event, this, chest,
 					"Time(" + boostTime + ")", "Amplifier(" + (modifierLevel - 1) + ")");
@@ -126,6 +126,7 @@ public class Berserk extends Modifier implements Listener {
 			DataHandler.setTag(chest, getKey() + "_stat_used", stat + 1, PersistentDataType.INTEGER);
 		}
 	}
+
 	@Override
 	public List<String> getStatistics(ItemStack item) {
 		// Get stats

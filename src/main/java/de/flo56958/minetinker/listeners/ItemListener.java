@@ -15,7 +15,6 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.Damageable;
@@ -33,7 +32,7 @@ public class ItemListener implements Listener {
 		final Item item = event.getEntity();
 		final ItemStack is = item.getItemStack();
 
-		if (!((modManager.isArmorViable(is) || modManager.isToolViable(is) || modManager.isWandViable(is))
+		if (!((modManager.isArmorViable(is) || modManager.isToolViable(is))
 				|| (MineTinker.getPlugin().getConfig().getBoolean("ItemBehaviour.ForModItems")
 				&& modManager.isModifierItem(is)))) {
 			return;
@@ -52,12 +51,10 @@ public class ItemListener implements Listener {
 		final Item item = event.getItemDrop();
 		final ItemStack is = item.getItemStack();
 
-		boolean isMineTinker = false;
+		boolean isMineTinker = modManager.isArmorViable(is) || modManager.isToolViable(is);
 
 		if (MineTinker.getPlugin().getConfig().getBoolean("ItemBehaviour.ForModItems"))
-			isMineTinker = modManager.isModifierItem(is);
-		if (modManager.isArmorViable(is) || modManager.isToolViable(is) || modManager.isWandViable(is))
-			isMineTinker = true;
+			isMineTinker |= modManager.isModifierItem(is);
 
 		if (!isMineTinker) return;
 
@@ -80,7 +77,6 @@ public class ItemListener implements Listener {
 		}
 
 		final Player player = event.getEntity();
-		final Inventory inventory = player.getInventory();
 
 		if (!MineTinker.getPlugin().getConfig().getBoolean("ItemBehaviour.ApplyOnPlayerDeath", true))
 			//For DeadSouls and other Grave-Plugins
@@ -93,15 +89,10 @@ public class ItemListener implements Listener {
 		for (ItemStack itemStack : new ArrayList<>(event.getDrops())) {
 			if (itemStack == null) continue;
 
-			boolean isMineTinker = false;
+			boolean isMineTinker = modManager.isArmorViable(itemStack) || modManager.isToolViable(itemStack);
 
 			if (MineTinker.getPlugin().getConfig().getBoolean("ItemBehaviour.ForModItems")) //Modifieritems
-				if (modManager.isModifierItem(itemStack))
-					isMineTinker = true;
-
-			if (modManager.isArmorViable(itemStack) || modManager.isToolViable(itemStack)
-					|| modManager.isWandViable(itemStack))
-				isMineTinker = true;
+				isMineTinker |= modManager.isModifierItem(itemStack);
 
 			if (!isMineTinker) continue;
 
@@ -145,11 +136,11 @@ public class ItemListener implements Listener {
 		} // no else as it gets added in if-clause
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onItemUse(@NotNull final PlayerItemDamageEvent event) {
 		final ItemStack item = event.getItem();
 
-		if (modManager.isToolViable(item) && modManager.isArmorViable(item) && modManager.isWandViable(item)) return;
+		if (modManager.isToolViable(item) || modManager.isArmorViable(item)) return;
 		if (!MineTinker.getPlugin().getConfig().getBoolean("ItemBehaviour.ConvertItemsOnUse", true)) return;
 
 		modManager.convertItemStack(event.getItem(), event.getPlayer());

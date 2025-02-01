@@ -104,8 +104,8 @@ public class Phasing extends Modifier implements Listener {
 		// TODO: Implement DDA for better traversal
 		loop:
 		for (BoundingBox dist = arrow.getBoundingBox().clone();
-			 arrow.getLocation().distance(vector.toLocation(arrow.getWorld())) <= level * 1.5;
-			 dist.shift(direction)) {
+		     arrow.getLocation().distance(vector.toLocation(arrow.getWorld())) <= level * 1.5;
+		     dist.shift(direction)) {
 			vector = dist.getCenter();
 			final Block block = arrow.getLocation().getWorld().getBlockAt(vector.toLocation(arrow.getWorld()));
 			if (block.isPassable()) {
@@ -143,7 +143,7 @@ public class Phasing extends Modifier implements Listener {
 		phaser.setCritical(arrow.isCritical());
 		phaser.setDamage(arrow.getDamage());
 		phaser.setShooter(arrow.getShooter());
-		phaser.setShotFromCrossbow(arrow.isShotFromCrossbow());
+		phaser.setWeapon(tool);
 		phaser.setFireTicks(arrow.getFireTicks());
 
 		phaser.setMetadata(this.getKey(), new FixedMetadataValue(MineTinker.getPlugin(), true));

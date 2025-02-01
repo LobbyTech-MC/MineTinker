@@ -1,26 +1,15 @@
-Alert.OnItemBreak: "%RED%당신의 툴이 망가진 것 같습니다! 1 내구성으로 되돌리세요."
-Alert.OnItemGrind: "%RED% MineTinker 아이템으로 숫돌을 사용할 수 없습니다."
+Alert.OnItemBreak: "%RED%당신의 도구가 망가진 것 같습니다! 내구도를 1 남기고 보존 되었습니다."
+Alert.OnItemGrind: "%RED%MineTinker 아이템으로 숫돌을 사용할 수 없습니다."
 Alert.ToolUpgradeFailure: "%RED%업그레이드에 실패했습니다!"
 Alert.InternalError: "%RED%내부 에러가 발생했습니다!"
 Alert.OnCooldown: "%RED%이 기능은 아직 쿨다운 상태입니다!"
 Alert.MinecraftAPI: "%RED%Minecrafts API에 연결할 수 없습니다!"
 
 StartUp.Commands: "명령어가 등록되었습니다!"
-StartUp.BuildersWands: "건축가 완드가 사용 가능해졌습니다!"
-StartUp.EasyHarvest: "손쉬운 수확이 사용 가능해졌습니다!"
 StartUp.Events: "이벤트가 등록되었습니다!"
 StartUp.GUIs: "GUIs를 불러오는 중!"
 StartUp.StdLogging: "표준 로깅이 활성화 되었습니다. Logging.Standard 설정에서 비활성화할 수 있습니다!"
 StartUp.DebugLogging: "디버그 로깅이 활성화 되었습니다. Logging.Debug 설정에서 비활성화할 수 있습니다!"
-
-Builderswand.Name.Wood: "목조 건축가의 완드"
-Builderswand.Name.Stone: "돌 건축가의 완드"
-Builderswand.Name.Iron: "철 건축가의 완드"
-Builderswand.Name.Gold: "금 건축가의 완드"
-Builderswand.Name.Diamond: "다이아몬드 건축가의 완드"
-Builderswand.Name.Netherite: "네더라이트 건축가의 완드"
-Builderswand.Description: "%WHITE%MineTinker- 건축가의 완드"
-Builderswand.Error: "%wand를 위한 레시피를 등록할 수 없습니다!"
 
 Commands.Info.Line1: "MineTinker (%ver)는 Flo56958에 의해 만들어진 플러그인입니다."
 Commands.Info.Line2: "이것은 다른 모드의 영향을 받았습니다. (e.g. TinkersConstruct)"
@@ -31,7 +20,6 @@ Commands.Reload.Note1: "주의: 다시 로드된 후 플러그인이 제대로 �
 Commands.Reload.Recipes: "레시피를 지우는 중!"
 Commands.Reload.Configs: "설정을 다시 불러오는 중!"
 Commands.Reload.ModManager: "모드 매니저를 다시 불러오는 중!"
-Commands.Reload.Builderswands: "건축가의 완드를 다시 불러오는 중!"
 Commands.Reload.GUIs: "GUI를 다시 불러오는 중!"
 Commands.Reload.Finish: "다시 불러오기를 완료했습니다!"
 Commands.ModList: "가능한 속성:"
@@ -69,7 +57,6 @@ GUIs.Modifiers.IncompatibleWith: "다음과 동시에 사용할 수 없습니다
 GUIs.Modifiers.EnchantCost: "마법 부여 비용: %WHITE%%enchantCost"
 GUIs.Modifiers.ClickToRecipe: "조합 레시피를 보기 위한 %key"
 GUIs.Modifiers.BlockToEnchant: "마법 부여를 위한 %block위의 %mat와 %key"
-GUIs.Modifiers.SlotCost: "레벨 당 필요한 프리 슬롯의 수: %amount"
 GUIs.ConfigurationEditor.ReloadPlugin: "MineTinker를 다시 불러옵니다."
 GUIs.ConfigurationEditor.Change: "%key가 %old에서 %new로 바뀌었습니다!"
 GUIs.ConfigurationEditor.Type: "타입: %type"
@@ -94,6 +81,7 @@ GUIs.Statistics.Combat.TitlePage: "%tool에 대한 전투 통계 - %pageNo"
 GUIs.Statistics.Combat.AmountKilled: "%amount 번 죽음"
 GUIs.Statistics.Combat.DamageDealt: "%amount 데미지를 가함"
 GUIs.Statistics.Combat.DamageReceived: "%amount 데미지를 입음"
+GUIs.Enchantable.Title: "인챈트를 선택 하십시오:"
 
 GUIs.ConfigurationEditor.config.PluginIncompatibility.Check: "호환되지 않는 플러그인에 대한 검색을 활성화 하고 이후 MineTinker는 이에 따라 대응합니다. (e.g. 옵션 설정을 바꿈)"
 GUIs.ConfigurationEditor.config.PluginIncompatibility.SkippedPlugins: "List 내 특정 플러그인에 대한 검색을 비활성화 합니다."
@@ -117,6 +105,7 @@ ModifierFailCause.ModMaxLevel: "수식어가 이미 최대 레벨입니다!"
 ModifierFailCause.NoFreeSlots: "아이템 공간이 부족합니다!"
 ModifierFailCause.NoPermission: "권한이 없습니다!"
 ModifierFailCause.PlayerFailure: "플레이어가 수정 사항 적용에 실패했습니다!"
+ModifierFailCause.ToolLevelToLow: "도구의 레벨이 충분하지 않습니다!"
 
 GrindStone.PossibleSlotsAfterGrind: "생산 후 사용 가능한 슬롯의 수: %amount"
 
@@ -165,7 +154,7 @@ Modifier:
     DescriptionModifierItem: "미쳐 날뛰는 수식어를 위한 수식어 아이템"
   Channeling:
     Name: "투과력"
-    Description: "번개 소환!"
+    Description: "레벨 당 %amount 확률로 뇌격을 소환 합니다!"
     ModifierItemName: "번개 속성 샤드"
     DescriptionModifierItem: "투과력 수식어를 위한 수식어 아이템"
   Directing:
@@ -191,12 +180,10 @@ Modifier:
     DescriptionModifierItem: "포착하기 어려움 수식어를 위한 수식어 아이템"
   Experienced:
     Name: "능숙함"
-    Description: "도구를 사용할 동안 %chance 퍼센트의 확률로  %amount XP를 떨어뜨릴 수 있습니다!"
     ModifierItemName: "경험의 본질"
     DescriptionModifierItem: "능숙함 수식어를 위한 수식어 아이템"
   Extra-Modifier:
     Name: "그 외 수식어"
-    Description: "추가적으로 %amount 의 수식어 슬롯을 도구를 추가합니다!"
     ModifierItemName: "제련된 네더스타"
     DescriptionModifierItem: "그 외 수식어를 위한 수식어 아이템"
   Fiery:
@@ -226,7 +213,6 @@ Modifier:
     DescriptionModifierItem: "서두름 수식어를 위한 수식어 아이템"
   Infinity:
     Name: "무한성"
-    Description: "활을 쏘기 위해 하나의 화살만이 필요하며 삼지창은 다시 돌아옵니다!"
     ModifierItemName: "인채드된 화살"
     DescriptionModifierItem: "무한성 수식어를 위한 수식어 아이템"
   Insulating:
@@ -261,7 +247,6 @@ Modifier:
     DescriptionModifierItem: "운 수식어를 위한 수식어 아이템"
   Magical:
     Name: "마법의"
-    Description: "중령의 영향을 받지 않고  %amount 퍼센트만큼 더 느리게 날아가는 마법의 궤도로  쏘세요! 만약 궤도가 표적에 도달하면 %min 퍼센트에서  %max 퍼센트 사이의 피해를 더 입힙니다(레벨에 따라 달라집니다)! 쏠 때 %xp 경험치가 소모됩니다!"
     ModifierItemName: "마법 화살"
     DescriptionModifierItem: "마법 수식어를 위한 수식어 아이템"
   Melting:
@@ -271,9 +256,11 @@ Modifier:
     DescriptionModifierItem: "융해 수식어를 위한 수식어 아이템"
   Multishot:
     Name: "다중 발사"
-    Description: "레벨 당 하나의 화살을 더 쏩니다!"
     ModifierItemName: "다중 화살"
     DescriptionModifierItem: "다중 화살 아이템을 위한 수식어 아이템"
+  Multijump:
+    Name: "다중점프"
+    Description: "레벨 당 점프 횟수가 늘어 납니다!"
   Nightseeker:
     Name: "야행성수색자"
     Description: "달이 빛날때(레벨과 달의 위치에 따라 달라집니다), 더 많거나 적은 데미지를 입힙니다(%amountmin 퍼센트에서  %amountmax 퍼센트). 이 효과는 낮과 지옥에서는 반대가 되지만, 결국 최대 힘을 가집니다."
@@ -281,7 +268,6 @@ Modifier:
     DescriptionModifierItem: "야행성 수색자 수식어를 위한 수식어 아이템"
   Photosynthesis:
     Name: "광합성"
-    Description: "햇빛이 비치는 동안 가만히 서 있을 때 레벨 당 %amount 만큼의 내구성으로 아이템을 수리합니다. 오래 서 있을수록 수리 속도가 빨라집니다(%multiplier 퍼센트)"
     ModifierItemName: "추출한 엽록소"
     DescriptionModifierItem: "광합성 수식어를 위한 수식어 아이템"
   Piercing:
@@ -321,7 +307,6 @@ Modifier:
     DescriptionModifierItem: "어둠에 적응된 시야 수식어를 위한 수식어 아이템"
   Shadow-Dive:
     Name: "야간 수영"
-    Description: "어두운 곳으로 숨어들어갈 때 시야에서 완전히 사라집니다!(빛의 레벨<=%level)"
     ModifierItemName: "사라지는 수정"
     DescriptionModifierItem: "야간 수영 수식어를 위한 수식어 아이템"
     LightToHigh: "빛 레벨이 너무 높습니다!"

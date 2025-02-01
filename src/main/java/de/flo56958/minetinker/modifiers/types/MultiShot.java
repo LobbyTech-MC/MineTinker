@@ -160,7 +160,7 @@ public class MultiShot extends Modifier implements Listener {
 
 		ChatWriter.logModifier(player, event, this, tool);
 
-		final int amount = (ToolType.CROSSBOW.contains(tool.getType())) ? 1 : 2;
+		final int amount = ToolType.CROSSBOW.contains(tool.getType()) ? 1 : 2;
 
 		for (int i = 1; i <= modLevel; i++) {
 			if (!player.getGameMode().equals(GameMode.CREATIVE) && arrow.getPickupStatus() != AbstractArrow.PickupStatus.CREATIVE_ONLY) {
@@ -197,9 +197,9 @@ public class MultiShot extends Modifier implements Listener {
 			Bukkit.getScheduler().runTaskLater(this.getSource(), () -> {
 				final Arrow arr = loc.getWorld().spawnArrow(loc, vel, (float) vel.length(), (float) spread);
 				arr.setShooter(player);
-				arr.setShotFromCrossbow(arrow.isShotFromCrossbow());
+				arr.setWeapon(tool);
 
-				if (player.getGameMode().equals(GameMode.CREATIVE))
+				if (player.getGameMode().equals(GameMode.CREATIVE) || arrow.getPickupStatus() == AbstractArrow.PickupStatus.CREATIVE_ONLY)
 					arr.setPickupStatus(AbstractArrow.PickupStatus.CREATIVE_ONLY);
 
 				arr.setCritical(arrow.isCritical());
@@ -231,8 +231,7 @@ public class MultiShot extends Modifier implements Listener {
 	}
 
 	private void returnArrow(Player player, Arrow arr) {
-		if (needsArrows && player.getGameMode() != GameMode.CREATIVE
-				&& arr.getPickupStatus() != AbstractArrow.PickupStatus.CREATIVE_ONLY) {
+		if (needsArrows && (arr.getPickupStatus() != AbstractArrow.PickupStatus.CREATIVE_ONLY)) {
 			if (!player.getInventory().addItem(new ItemStack(Material.ARROW, 1)).isEmpty()) { //adds items to (full) inventory
 				player.getWorld().dropItem(player.getLocation(), new ItemStack(Material.ARROW, 1)); //drops item when inventory is full
 			} // no else as it gets added in if

@@ -45,7 +45,7 @@ public class AntiArrowPlating extends Modifier {
 
 	@Override
 	public @NotNull List<Enchantment> getAppliedEnchantments() {
-		return Collections.singletonList(Enchantment.PROTECTION_PROJECTILE);
+		return Collections.singletonList(Enchantment.PROJECTILE_PROTECTION);
 	}
 
 	@Override
@@ -88,13 +88,12 @@ public class AntiArrowPlating extends Modifier {
 		ItemMeta meta = tool.getItemMeta();
 
 		if (meta != null) {
-			if (ToolType.HELMET.contains(tool.getType()) || ToolType.CHESTPLATE.contains(tool.getType())
-					|| ToolType.LEGGINGS.contains(tool.getType()) || ToolType.BOOTS.contains(tool.getType()))
-				meta.addEnchant(Enchantment.PROTECTION_PROJECTILE, modManager.getModLevel(tool, this), true);
+			if (ToolType.ARMOR.contains(tool.getType()))
+				meta.addEnchant(Enchantment.PROJECTILE_PROTECTION, modManager.getModLevel(tool, this), true);
 
 			tool.setItemMeta(meta);
 		}
-		
+
 		return true;
 	}
 }

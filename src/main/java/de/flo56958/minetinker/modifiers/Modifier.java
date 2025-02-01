@@ -1,5 +1,6 @@
 package de.flo56958.minetinker.modifiers;
 
+import com.google.common.base.Splitter;
 import de.flo56958.minetinker.MineTinker;
 import de.flo56958.minetinker.api.events.ModifierApplyEvent;
 import de.flo56958.minetinker.api.events.ModifierFailEvent;
@@ -9,6 +10,7 @@ import de.flo56958.minetinker.modifiers.types.ExtraModifier;
 import de.flo56958.minetinker.utils.ChatWriter;
 import de.flo56958.minetinker.utils.ConfigurationManager;
 import de.flo56958.minetinker.utils.LanguageManager;
+import de.flo56958.minetinker.utils.PlayerInfo;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.ConfigurationSection;
@@ -60,9 +62,9 @@ public abstract class Modifier {
 	}
 
 	final boolean checkAndAdd(final Player player, final ItemStack tool, final boolean isCommand,
-							  final boolean fromRandom, final boolean silent, final boolean modifySlotCount) {
+	                          final boolean fromRandom, final boolean silent, final boolean modifySlotCount) {
 		if (modifySlotCount) {
-			//Check for free Slots
+			// Check for free Slots
 			if ((modManager.getFreeSlots(tool) < this.getSlotCost() && !this.equals(ExtraModifier.instance())) && !isCommand) {
 				if (!silent)
 					pluginManager.callEvent(new ModifierFailEvent(player, tool, this, ModifierFailCause.NO_FREE_SLOTS, false));
@@ -70,7 +72,7 @@ public abstract class Modifier {
 			}
 		}
 
-		//Check for Permission
+		// Check for Permission
 		if (player != null) {
 			if (!player.hasPermission(getApplyPermission())) {
 				if (!silent)
@@ -79,7 +81,7 @@ public abstract class Modifier {
 			}
 		}
 
-		//Check for ToolType
+		// Check for ToolType
 		FileConfiguration modifiersconfig = ConfigurationManager.getConfig("Modifiers.yml");
 		if (!(modifiersconfig.getBoolean("CommandIgnoresToolTypes") && isCommand && !fromRandom) && !this.isMaterialCompatible(tool.getType())) {
 			if (!silent)
@@ -87,21 +89,21 @@ public abstract class Modifier {
 			return false;
 		}
 
-		//Check for Tool Level
-		if(modManager.getLevel(tool) < this.minimumLevelRequirement) {
+		// Check for Tool Level
+		if (modManager.getLevel(tool) < this.minimumLevelRequirement) {
 			if (!silent)
 				pluginManager.callEvent(new ModifierFailEvent(player, tool, this, ModifierFailCause.TOOL_LEVEL_TO_LOW, isCommand));
 			return false;
 		}
 
-		//Check for Max Level
+		// Check for Max Level
 		if (!(modifiersconfig.getBoolean("CommandIgnoresMaxLevel") && isCommand && !fromRandom) && modManager.getModLevel(tool, this) >= this.getMaxLvl()) {
 			if (!silent)
 				pluginManager.callEvent(new ModifierFailEvent(player, tool, this, ModifierFailCause.MOD_MAXLEVEL, isCommand));
 			return false;
 		}
 
-		//Check for Incompatibilities
+		// Check for Incompatibilities
 		if (!(modManager.hasMod(tool, this) && modifiersconfig.getBoolean("IgnoreIncompatibilityIfModifierAlreadyApplied"))) {
 			if (fromRandom || !(modifiersconfig.getBoolean("CommandIgnoresIncompatibilities") && isCommand)) {
 				final Set<Modifier> incompatibility = modManager.getIncompatibilities(this);
@@ -112,15 +114,15 @@ public abstract class Modifier {
 							pluginManager.callEvent(new ModifierFailEvent(player, tool, this, ModifierFailCause.INCOMPATIBLE_MODIFIERS, isCommand));
 						return false;
 					}
-					if (modifiersconfig.getBoolean("IncompatibilitiesConsiderEnchants")) {
-						for (final Enchantment e : m.getAppliedEnchantments()) {
-							if (!tool.hasItemMeta()) return false;
-							if (Objects.requireNonNull(tool.getItemMeta(), "Tool has no ItemMeta").hasEnchant(e)) {
-								if (!silent)
-									pluginManager.callEvent(new ModifierFailEvent(player, tool, this, ModifierFailCause.INCOMPATIBLE_MODIFIERS, isCommand));
-								return false;
-							}
-						}
+
+					if (!modifiersconfig.getBoolean("IncompatibilitiesConsiderEnchants")) continue;
+					final ItemMeta meta = tool.getItemMeta();
+					if (meta == null) continue;
+					for (final Enchantment e : m.getAppliedEnchantments()) {
+						if (!meta.hasEnchant(e)) continue;
+						if (!silent)
+							pluginManager.callEvent(new ModifierFailEvent(player, tool, this, ModifierFailCause.INCOMPATIBLE_MODIFIERS, isCommand));
+						return false;
 					}
 				}
 			}
@@ -129,7 +131,7 @@ public abstract class Modifier {
 		modManager.addMod(tool, this);
 
 		if (modifySlotCount) {
-			//Reduce Slotamount
+			// Reduce Slotamount
 			modManager.setFreeSlots(tool, modManager.getFreeSlots(tool) - this.getSlotCost());
 		}
 
@@ -189,7 +191,9 @@ public abstract class Modifier {
 		return getConfig().getBoolean("Enchantable", false);
 	}
 
-	public final NamespacedKey getNamespaceKey() { return namespaceKey; }
+	public final NamespacedKey getNamespaceKey() {
+		return namespaceKey;
+	}
 
 	/**
 	 * changes the core settings of the Modifier (like a secondary constructor)
@@ -198,8 +202,7 @@ public abstract class Modifier {
 		final FileConfiguration config = getConfig();
 
 		try {
-			this.color = ChatWriter.getColor(Objects.requireNonNull(config.getString("Color", "%WHITE%"),
-					"Config has no Color-Value!"));
+			this.color = ChatWriter.getColor(config.getString("Color", "%WHITE%"));
 		} catch (IllegalArgumentException | ArrayIndexOutOfBoundsException ignored) {
 			this.color = ChatColor.WHITE;
 			ChatWriter.logError("Illegal Color detected for Modifier " + this.name);
@@ -216,7 +219,7 @@ public abstract class Modifier {
 		}
 
 		if (source.equals(MineTinker.getPlugin())) { //normal Languagesystem-Integration
-			String langStart = "Modifier." + getKey();
+			final String langStart = "Modifier." + getKey();
 
 			this.name = LanguageManager.getString(langStart + ".Name");
 			this.description = LanguageManager.getString(langStart + ".Description");
@@ -256,14 +259,12 @@ public abstract class Modifier {
 	 * @param tool the Tool
 	 */
 	public void removeMod(final ItemStack tool) {
-		ItemMeta meta = tool.getItemMeta();
+		final ItemMeta meta = tool.getItemMeta();
 
 		if (meta != null) {
-			for (Enchantment enchantment : getAppliedEnchantments())
-				meta.removeEnchant(enchantment);
-
-			for (Attribute attribute : getAppliedAttributes())
-				meta.removeAttributeModifier(attribute);
+			getAppliedEnchantments().forEach(meta::removeEnchant);
+			//getAppliedAttributes().forEach(meta::removeAttributeModifier);
+			// Attributes are handled by the respective mods
 
 			tool.setItemMeta(meta);
 		}
@@ -299,14 +300,8 @@ public abstract class Modifier {
 		return Collections.emptyList();
 	}
 
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	protected final boolean isMaterialCompatible(@NotNull final Material material) {
-		for (final ToolType toolType : getAllowedTools()) {
-			if (toolType.contains(material))
-				return true;
-		}
-
-		return false;
+		return getAllowedTools().stream().anyMatch(toolType -> toolType.contains(material));
 	}
 
 	protected final FileConfiguration getConfig() {
@@ -314,9 +309,7 @@ public abstract class Modifier {
 	}
 
 	protected final void registerCraftingRecipe() {
-		if (!hasRecipe()) {
-			return;
-		}
+		if (!hasRecipe()) return;
 
 		final FileConfiguration config = getConfig();
 		try {
@@ -329,34 +322,34 @@ public abstract class Modifier {
 
 			newRecipe.shape(top, middle, bottom); //makes recipe
 
-			if (materials != null) {
-				for (final String key : materials.getKeys(false)) {
-					final String materialName = materials.getString(key);
-
-					if (materialName == null) {
-						ChatWriter.logError(LanguageManager.getString("Modifier.MaterialEntryNotFound"));
-						return;
-					}
-
-					final HashSet<Material> mats = new HashSet<>();
-					for (final String mat : materialName.split(",")) {
-						if (mat.isEmpty()) continue;
-						final Material m = Material.getMaterial(mat);
-						if (m == null) continue;
-						mats.add(m);
-					}
-
-					if (mats.isEmpty()) {
-						ChatWriter.log(false, "Material [" + materialName + "] is null for mod [" + this.name + "]");
-						return;
-					} else {
-						newRecipe.setIngredient(key.charAt(0), new RecipeChoice.MaterialChoice(mats.stream().toList()));
-					}
-				}
-			} else {
+			if (materials == null) {
 				ChatWriter.logError("Could not register recipe for the " + this.name + "-Modifier!"); //executes if the recipe could not initialize
 				ChatWriter.logError("Cause: Malformed recipe config.");
 				return;
+			}
+
+			for (final String key : materials.getKeys(false)) {
+				final String materialName = materials.getString(key);
+
+				if (materialName == null) {
+					ChatWriter.logError(LanguageManager.getString("Modifier.MaterialEntryNotFound"));
+					return;
+				}
+
+				final HashSet<Material> mats = new HashSet<>();
+				for (final String mat : Splitter.on(',').split(materialName)) {
+					if (mat.isEmpty()) continue;
+					final Material m = Material.getMaterial(mat);
+					if (m == null) continue;
+					mats.add(m);
+				}
+
+				if (mats.isEmpty()) {
+					ChatWriter.log(false, "Material [" + materialName + "] is null for mod [" + this.name + "]");
+					return;
+				}
+
+				newRecipe.setIngredient(key.charAt(0), new RecipeChoice.MaterialChoice(mats.stream().toList()));
 			}
 
 			MineTinker.getPlugin().getServer().addRecipe(newRecipe); //adds recipe
@@ -365,10 +358,11 @@ public abstract class Modifier {
 			this.namespaceKey = nkey;
 		} catch (Exception e) {
 			e.printStackTrace();
-			ChatWriter.logError("Could not register recipe for the " + this.name + "-Modifier!"); //executes if the recipe could not initialize
+			ChatWriter.logError("Could not register recipe for the " + this.name + "-Modifier!");
 		}
 	}
 
+	@Override
 	@Contract(value = "null -> false", pure = true)
 	public final boolean equals(@Nullable Object o) {
 		if (o instanceof Modifier mod)
@@ -376,13 +370,19 @@ public abstract class Modifier {
 		return false;
 	}
 
+	@Override
+	public final int hashCode() {
+		return Objects.hash(getKey());
+	}
+
 	// ---------------------- Enchantable Stuff ----------------------
 
 	/**
 	 * @param player The player that enchants
-	 * @param item The item that will be enchanted
+	 * @param item   The item that will be enchanted
 	 */
 	public final void enchantItem(@NotNull Player player, @NotNull ItemStack item) {
+		if (!isEnchantable()) return;
 		if (!player.hasPermission(getCraftPermission())) return;
 
 		final Location location = player.getLocation();
@@ -396,34 +396,39 @@ public abstract class Modifier {
 				world.dropItem(location, getModItem());
 			} // no else as it gets added in if
 
-			if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnEnchanting")) {
+			if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnEnchanting"))
 				player.playSound(location, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 0.5F);
-			}
 
 			ChatWriter.log(false, player.getDisplayName() + " created a " + getName() + "-Modifiers in Creative!");
-		} else if (player.getLevel() >= getEnchantCost()) {
-			int amount = item.getAmount();
-			int newLevel = player.getLevel() - getEnchantCost();
+			return;
+		}
 
-			player.setLevel(newLevel);
-			item.setAmount(amount - 1);
+		final boolean needsLevels = ConfigurationManager.getConfig("Modifiers.yml").getBoolean("EnchantableRequiresLevels", true);
 
-			if (!inventory.addItem(getModItem()).isEmpty()) { //adds items to (full) inventory
-				world.dropItem(location, getModItem());
-			} // no else as it gets added in if
-
-			if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnEnchanting")) {
-				player.playSound(location, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 0.5F);
-			}
-
-			ChatWriter.log(false, player.getDisplayName() + " created a " + getName() + "-Modifiers!");
-		} else {
+		final int exp = needsLevels ? player.getLevel() : PlayerInfo.getPlayerExp(player);
+		if (exp < getEnchantCost()) {
 			ChatWriter.sendActionBar(player, ChatColor.RED
 					+ LanguageManager.getString("Modifier.Enchantable.LevelsRequired", player)
 					.replace("%amount", String.valueOf(getEnchantCost())));
 			ChatWriter.log(false, player.getDisplayName() + " tried to create a "
 					+ getName() + "-Modifiers but had not enough levels!");
+			return;
 		}
+
+		final int amount = item.getAmount();
+
+		if (needsLevels) player.setLevel(exp - getEnchantCost());
+		else player.giveExp(- getEnchantCost());
+		item.setAmount(amount - 1);
+
+		if (!inventory.addItem(getModItem()).isEmpty()) { //adds items to (full) inventory
+			world.dropItem(location, getModItem());
+		} // no else as it gets added in if
+
+		if (MineTinker.getPlugin().getConfig().getBoolean("Sound.OnEnchanting"))
+			player.playSound(location, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0F, 0.5F);
+
+		ChatWriter.log(false, player.getDisplayName() + " created a " + getName() + "-Modifiers!");
 	}
 
 	public final String getCraftPermission() {

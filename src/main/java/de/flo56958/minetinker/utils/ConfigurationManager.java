@@ -19,6 +19,7 @@ public class ConfigurationManager {
 	 */
 	private static final HashMap<String, FileConfiguration> configs = new HashMap<>();
 	private static final HashMap<FileConfiguration, File> configsFolder = new HashMap<>();
+
 	private ConfigurationManager() {} //So nobody can instantiate this class
 
 	/**
@@ -44,11 +45,19 @@ public class ConfigurationManager {
 	public static void reload() {
 		loadConfig("", "layout.yml");
 
-		loadConfig("", "BuildersWand.yml");
-
-		loadConfig("", "Elytra.yml");
-
 		loadConfig("", "Modifiers.yml");
+
+		// reload all other configs
+		for (final String config : configs.keySet()) {
+			if (config.equals("config.yml")) continue;
+			final FileConfiguration fileConfiguration = configs.get(config);
+
+			try {
+				fileConfiguration.load(configsFolder.get(fileConfiguration));
+			} catch (IOException | InvalidConfigurationException e) {
+				e.printStackTrace();
+			}
+		}
 
 		//importing Main configuration into system
 		configs.put("config.yml", MineTinker.getPlugin().getConfig());
@@ -68,14 +77,14 @@ public class ConfigurationManager {
 		configsFolder.put(fileConfiguration, customConfigFile);
 		configs.put(file, fileConfiguration);
 
-        if (!customConfigFile.exists()) return;
+		if (!customConfigFile.exists()) return;
 
-        try {
-            fileConfiguration.load(customConfigFile);
-        } catch (IOException | InvalidConfigurationException e) {
-            e.printStackTrace();
-        }
-    }
+		try {
+			fileConfiguration.load(customConfigFile);
+		} catch (IOException | InvalidConfigurationException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void saveConfig(@NotNull FileConfiguration config) {
 		try {

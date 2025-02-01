@@ -1,5 +1,7 @@
 package de.flo56958.minetinker;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import de.flo56958.minetinker.commands.CommandManager;
 import de.flo56958.minetinker.data.GUIs;
 import de.flo56958.minetinker.data.Lists;
@@ -7,25 +9,25 @@ import de.flo56958.minetinker.listeners.*;
 import de.flo56958.minetinker.modifiers.ModManager;
 import de.flo56958.minetinker.modifiers.types.*;
 import de.flo56958.minetinker.utils.*;
+import de.flo56958.minetinker.utils.playerconfig.GeneralPCOptions;
+import de.flo56958.minetinker.utils.playerconfig.PlayerConfigurationManager;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class MineTinker extends JavaPlugin {
 
 	private static JavaPlugin plugin;
-	public static boolean is18compatible;
-	public static boolean is19compatible;
-	public static boolean is20compatible;
 
 	@Contract(pure = true)
 	public static JavaPlugin getPlugin() { // necessary to do getConfig() in other classes
@@ -34,30 +36,19 @@ public class MineTinker extends JavaPlugin {
 
 	private void parseMCVersion() {
 		try {
-			final String version = Bukkit.getVersion().split("MC: ")[1].replaceAll("\\)","");
-			final String[] ver = version.split("\\.");
+			final String version = Iterables.get(Splitter.on("MC: ").split(Bukkit.getVersion()), 1).replaceAll("\\)", "");
+			final List<String> ver = Splitter.on('.').splitToList(version);
 
-			int mayor = Integer.parseInt(ver[0]);
+			int mayor = Integer.parseInt(ver.getFirst());
 			ChatWriter.log(true, "Minecraft Mayor Version: " + mayor);
 
-			int minor = Integer.parseInt(ver[1]);
+			int minor = Integer.parseInt(ver.get(1));
 			ChatWriter.log(true, "Minecraft Minor Version: " + minor);
-
-			is18compatible = mayor >= 1 && minor >= 18;
-			is19compatible = mayor >= 1 && minor >= 19;
-			is20compatible = mayor >= 1 && minor >= 20;
 		} catch (Exception e) {
 			e.printStackTrace();
-			ChatWriter.logError("Could not parse the Minecraft Version! Running 1.17 feature set. " +
+			ChatWriter.logError("Could not parse the Minecraft Version! Running 1.21 feature set. " +
 					"If you are running a higher Version, please report this as an error.");
-			return;
 		}
-		if (is18compatible)
-			ChatWriter.log(false, "1.18 enhanced features activated!");
-		if (is19compatible)
-			ChatWriter.log(false, "1.19 enhanced features activated!");
-		if (is20compatible)
-			ChatWriter.log(false, "1.20 enhanced features activated!");
 	}
 
 	@Override
@@ -72,10 +63,10 @@ public class MineTinker extends JavaPlugin {
 
 		ConfigurationManager.reload();
 
+		PlayerConfigurationManager.getInstance().registerPlayerConfigInterface(GeneralPCOptions.INSTANCE);
+
 		ModManager.instance();
 		addCoreMods();
-
-		BuildersWandListener.init();
 
 		ChatWriter.reload();
 
@@ -107,20 +98,8 @@ public class MineTinker extends JavaPlugin {
 		Bukkit.getPluginManager().registerEvents(new PlayerInfo(), this);
 		Bukkit.getPluginManager().registerEvents(new EnchantingListener(), this);
 		Bukkit.getPluginManager().registerEvents(new GrindstoneListener(), this);
-
-		final FileConfiguration elytraConf = ConfigurationManager.getConfig("Elytra.yml");
-		elytraConf.options().copyDefaults(true);
-		elytraConf.addDefault("ExpChanceWhileFlying", 10);
-		ConfigurationManager.saveConfig(elytraConf);
-
-		if (ConfigurationManager.getConfig("BuildersWand.yml").getBoolean("enabled")) {
-			Bukkit.getPluginManager().registerEvents(new BuildersWandListener(), this);
-			BuildersWandListener.reload();
-			ChatWriter.log(false, LanguageManager.getString("StartUp.BuildersWands"));
-		}
-
-		if (getConfig().getBoolean("actionbar-on-exp-gain", false))
-			Bukkit.getPluginManager().registerEvents(new ActionBarListener(), this);
+		Bukkit.getPluginManager().registerEvents(new ActionBarListener(), this);
+		Bukkit.getPluginManager().registerEvents(PlayerConfigurationManager.getInstance(), this);
 
 		if (getConfig().getBoolean("ItemBehaviour.TrackStatistics", true))
 			Bukkit.getPluginManager().registerEvents(new ItemStatisticsHandler(), this);
@@ -128,7 +107,7 @@ public class MineTinker extends JavaPlugin {
 		ChatWriter.log(false, LanguageManager.getString("StartUp.Events"));
 
 		if (getConfig().getBoolean("logging.metrics", true)) {
-			final Metrics met = new Metrics(this, 	2833);
+			final Metrics met = new Metrics(this, 2833);
 			met.addCustomChart(new SimplePie("used_language", () -> getConfig().getString("Language", "en_US")));
 		}
 
@@ -149,14 +128,16 @@ public class MineTinker extends JavaPlugin {
 	}
 
 	private void addCoreMods() {
-		ModManager modManager = ModManager.instance();
+		final ModManager modManager = ModManager.instance();
 		modManager.register(AntiArrowPlating.instance());
 		modManager.register(AntiBlastPlating.instance());
 		modManager.register(Aquaphilic.instance());
 		modManager.register(AutoSmelt.instance());
 		modManager.register(Beheading.instance());
 		modManager.register(Berserk.instance());
+		modManager.register(Building.instance());
 		modManager.register(Channeling.instance());
+		modManager.register(Dense.instance());
 		modManager.register(Directing.instance());
 		modManager.register(Drilling.instance());
 		modManager.register(Ender.instance());
@@ -206,7 +187,7 @@ public class MineTinker extends JavaPlugin {
 		modManager.register(SpidersBane.instance());
 		modManager.register(Sunblazer.instance());
 		modManager.register(Sweeping.instance());
-		if (is19compatible) modManager.register(SwiftSneaking.instance());
+		modManager.register(SwiftSneaking.instance());
 		modManager.register(Tanky.instance());
 		modManager.register(Thorned.instance());
 		modManager.register(Timber.instance());
@@ -229,9 +210,11 @@ public class MineTinker extends JavaPlugin {
 		GUIs.reload();
 	}
 
+	@Override
 	public void onDisable() {
 		ChatWriter.logInfo("Shutting down!");
 		LanguageManager.cleanup(); //TODO: Replace with PluginDisableEvent
+		PlayerConfigurationManager.getInstance().saveAllPlayerConfigs();
 	}
 
 	/**

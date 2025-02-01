@@ -3,32 +3,20 @@ Alert.OnItemGrind: "%RED%Nem használhatod a Köszörűkövet MineTinker elemeke
 Alert.ToolUpgradeFailure: "%RED%Nem sikerült a fejlesztés!"
 Alert.InternalError: "%RED%Belső hiba történt!"
 Alert.OnCooldown: "%RED%Ezt a képességet még nem tudod újra használni!"
+Alert.MinecraftAPI: "%RED%Nem sikerült csatlakozni a Minecraft API-hoz!"
 
 StartUp.Commands: "Parancsok regisztrálva!"
-StartUp.BuildersWands: "Builderswands aktiválva!"
-StartUp.EasyHarvest: "EasyHarvest aktiválva!"
 StartUp.Events: "Események regisztrálva!"
 StartUp.GUIs: "GUI betöltése"
 StartUp.StdLogging: "Az alap logolás be van kapcsolva. A kikapcsolásához keresd a Logging.Standard sort a config fájlban."
 StartUp.DebugLogging: "A hibakereső logolás be van kapcsolva. Ezt ki kellene kapcsolnod, keresd a Logging.Debug sort a config fájlban!"
-StartUp.Incompatible:
-  Start: "Inkompatibilis pluginok keresése... Ezt a funkciót kikapcsolhatod a config fájlban."
-  Found: "%plugin felismerve. A MineTinker finomhangolása a jobb kompatibilitás érdekében..."
-
-Builderswand.NameWood: "Fa Építőpálca"
-Builderswand.NameStone: "Kő Építőpálca"
-Builderswand.NameIron: "Vas Építőpálca"
-Builderswand.NameGold: "Arany Építőpálca"
-Builderswand.NameDiamond: "Gyémánt Építőpálca"
-Builderswand.Description: "%WHITE%MineTinker-Építőpálca"
-Builderswand.Error.CraftWood: "A Fa Építőpálca receptjét nem lehet regisztrálni!"
-Builderswand.Error.CraftStone: "A Kő Építőpálca receptjét nem lehet regisztrálni!"
-Builderswand.Error.CraftIron: "A Vas Építőpálca receptjét nem lehet regisztrálni!"
-Builderswand.Error.CraftGold: "Az Arany Építőpálca receptjét nem lehet regisztrálni!"
-Builderswand.Error.CraftDiamond: "A Gyémánt Építőpálca receptjét nem lehet regisztrálni!"
 
 Commands.Info.Line1: "A MineTinker (%ver) egy kiegészítő, melyet Flo56958 készített."
 Commands.Info.Line2: "Különböző modok inspirálták (mint például a TinkersConstruct)."
+Commands.Info.Title: "MineTinker Információ"
+Commands.Info.Contributors: "Közreműködők"
+Commands.Info.ContributorsAction: "Katt ide az összes közreműködő megtekintéséhez!\n​"
+Commands.Info.Failure: "Nem lehet információkat lekérni a Githubról!\n​"
 Commands.InvalidArguments: "Érvénytelen parancsot adtál meg."
 Commands.InvalidTool: "Megfelelő eszközt kell a jobb kezedben tartanod ahhoz, hogy működjön ez a parancs!"
 Commands.NoPermission: "Nincs jogosultságod ennek a műveletnek a végrehajtására!"
@@ -36,7 +24,6 @@ Commands.Reload.Note1: "Megjegyzés: Előfordulhat, hogy ez a plugin nem működ
 Commands.Reload.Recipes: "Receptek alaphelyzetbe állítása."
 Commands.Reload.Configs: "Beállítások újratöltése."
 Commands.Reload.ModManager: "ModManager újratöltése."
-Commands.Reload.Builderswands: "Építőpálcák újratöltése."
 Commands.Reload.GUIs: "GUI-k újratöltése."
 Commands.Reload.Finish: "Az újratöltés kész!"
 Commands.ModList: "Lehetséges Bővítések:"
@@ -73,8 +60,11 @@ GUIs.Modifiers.CanApply: "Alkalmazható:"
 GUIs.Modifiers.IncompatibleWith: "Nem támogatják:"
 GUIs.Modifiers.EnchantCost: "A fejlesztés ára: %WHITE%%enchantCost"
 GUIs.Modifiers.ClickToRecipe: "%key megmutatja a receptet."
-GUIs.Modifiers.BlockToEnchant: ""
-GUIs.Modifiers.SlotCost: "Szükséges szabad bővítőhelyek szintenként: %amount"
+GUIs.Modifiers.BlockToEnchant: "%key %mat val a %block on az elem varázsolásához"
+GUIs.Modifiers.SlotCost: "Szintenként szükséges szabad helyek: %WHITE%%amount"
+GUIs.Modifiers.MinimumToolLevel: "Minimális Szerszámszint: %WHITE%%level"
+GUIs.Modifiers.FilterButton: "Nézet Szűrése"
+GUIs.Modifiers.FilterLore: "%amount Módosítók"
 GUIs.ConfigurationEditor.ReloadPlugin: "MineTinker újratöltése"
 GUIs.ConfigurationEditor.Change: "%key értéke megváltozott; régi=%old, új=%new."
 GUIs.ConfigurationEditor.Type: "Típus: %type"
@@ -85,6 +75,23 @@ GUIs.ConfigurationEditor.Title: "Beállításkezelő - oldalszám: %pageNo"
 GUIs.ConfigurationEditor.TitleConfigs: "%config, Oldal: %pageNo"
 GUIs.ConfigurationEditor.IncrementValueClick: "%key megnövelése ennyivel: %amount!"
 GUIs.ConfigurationEditor.DecrementValueClick: "%key csökkentése ennyivel: %amount!"
+GUIs.ConfigurationEditor.InsertValue: "%key ,hogy beírd az új összeget"
+GUIs.ConfigurationEditor.ToggleValue: " %key az érték váltásához!"
+GUIs.Statistics.Title: "Tárgy Statisztika a %tool -hoz"
+GUIs.Statistics.General.Title: "Általános Statisztikák"
+GUIs.Statistics.General.Creator: "Készítő: %player"
+GUIs.Statistics.General.Created: "Létrehozás dátuma: %date"
+GUIs.Statistics.Blocks.Title: "Block Statisztikák"
+GUIs.Statistics.Blocks.TotalAmount: "Összesen Törött Blockok: %amount"
+GUIs.Statistics.Blocks.TitlePage: "Block statisztika a %tool - %pageNo"
+GUIs.Statistics.Blocks.AmountBroken: "%amount alkalommal tört el."
+GUIs.Statistics.Modifiers.TitlePage: "Módosító Statisztikák a %tool hoz - %pageNo"
+GUIs.Statistics.Combat.Title: "Harci Statisztikák"
+GUIs.Statistics.Combat.TitlePage: "Sebzési analitika az %tool eszközhöz - %pageNo"
+GUIs.Statistics.Combat.AmountKilled: "%amount -szer megölt."
+GUIs.Statistics.Combat.DamageDealt: "%amount leadott sebzés"
+GUIs.Statistics.Combat.DamageReceived: "%amount sebzés leadva"
+GUIs.Enchantable.Title: "Válaszd ki a Módosítót a varázsláshoz"
 
 GUIs.ConfigurationEditor.config.PluginIncompatibility.Check: "Lehetővé teszi inkompatibilis pluginok keresését, és a MineTinker megpróbál megfelelően reagálni (pl. módosítja a beállításait)."
 GUIs.ConfigurationEditor.config.PluginIncompatibility.SkippedPlugins: "Kikapcsolja a listán meghatározott Pluginok keresését."
@@ -132,3 +139,146 @@ Modifier:
     Description: "A páncél csökkenti a robbanások okozta sebzést."
     ModifierItemName: "Robbanásálló Fém"
     DescriptionModifierItem: "Robbanásálló Bevonat Módosítás"
+  Aquaphilic:
+    Name: "Akvafil"
+    Description: "Ússz gyorsabban, több ideig legyél a vízalatt és törj ki vízalatti blockokat gyorsabban"
+    ModifierItemName: "Az Óceán Gyöngye"
+    DescriptionModifierItem: "Módosítható eszköz a Vízalatt Módosítóhoz"
+  Auto-Smelt:
+    Name: "Automatikus-Égetés"
+    Description: "Kiégetett ércek, és más blockok, amikor bányászol! %chance% esély arra, hogy aktiválódik a szintenként."
+    ModifierItemName: "Elvarázsolt Kemence"
+    Statistic_Used: "Használt Alkalmak: %amount"
+  Beheading:
+    Name: "Lefejezés"
+    ModifierItemName: "Elvarázsolt Wither-koponya"
+  Berserk:
+    ModifierItemName: "Véres Redstone"
+  Directing:
+    Name: "Rendezés"
+    Description: "Az összes megölt, elpusztíott élőlény, block automatikusan az inventorydba kerül"
+    ModifierItemName: "Elvarázsolt Iránytű"
+  Drilling:
+    Name: "Fúrás"
+  Ender:
+    Name: "Ender"
+    Description: "Elteleportál a nyíl landolási helyére, amikor guggolsz."
+    ModifierItemName: "Speciális Enderszem"
+  Evasive:
+    Name: "Kitérő"
+    ModifierItemName: "Gyors Toll"
+  Experienced:
+    Name: "Tapasztalt"
+  Extra-Modifier:
+    Name: "Extra-Módosítás"
+    ModifierItemName: "Finomított Nether csillag"
+  Fiery:
+    ModifierItemName: "Elvarázsolt Lángrúd"
+  Freezing:
+    Name: "Fagyasztani"
+    Description: "Lefagyasztja a vizet körülötted."
+    ModifierItemName: "Jeges Kristály"
+  Glowing:
+    Name: "Világító"
+  Haste:
+    Name: "Gyorsaság"
+  Infinity:
+    Name: "Végtelen"
+    ModifierItemName: "Elvarázsolt Nyil"
+  Knockback:
+    Name: "Hátralökés"
+    ModifierItemName: "Elvarázsolt TNT"
+  Light-Weight:
+    Name: "Könnyű"
+  Luck:
+    Name: "Szerencse"
+    Description: "Szerezz több zsákmányt a moboktól, és a blockoktól!"
+    ModifierItemName: "Tömörített Lapis-Block"
+  Magical:
+    Name: "Varázslatos"
+    ModifierItemName: "Varázs nyil"
+  Melting:
+    Name: "Olvasztás"
+    ModifierItemName: "Elvarázsolt Magma Kocka"
+  Nightseeker:
+    ModifierItemName: "Sötét Fény Érzékelő"
+  Photosynthesis:
+    Name: "Fotoszintézis"
+  Poisonous:
+    ModifierItemName: "Elvarázsolt Rohadt Hús"
+  Power:
+    Name: "Erő"
+    ModifierItemName: "Elvarázsolt Smaragd"
+  Propelling:
+    ModifierItemName: "Elvarázsolt Tűzijáték csillag"
+  Self-Repair:
+    ModifierItemName: "Elvarázsolt Mohás kő"
+  Smite:
+    Name: "Sújtás"
+  Soul-Speed:
+    Name: "Lelki gyorsaság"
+  Speedy:
+    Name: "Gyors"
+  Sunblazer:
+    ModifierItemName: "Aranyozott napfény érzékelő"
+  Sweeping:
+    ModifierItemName: "Elvarázsolt vasérc"
+  Thorned:
+    ModifierItemName: "Tüskés Növény"
+  Timber:
+    ModifierItemName: "Fa Emerald"
+
+DataType.List: "Lista"
+
+ToolType.ALL: "Összes"
+ToolType.AXE: "Balták"
+ToolType.BOOTS: "Csizmák"
+ToolType.BOW: "Íjak"
+ToolType.ELYTRA: "Kitin Szárnyak"
+ToolType.FISHINGROD: "Horgászbotok"
+ToolType.HOE: "Ásók"
+ToolType.INVALID: "Érvénytelen"
+ToolType.LEGGINGS: "Nadrág"
+ToolType.OTHER: "Több"
+ToolType.PICKAXE: "Csákányok"
+ToolType.SHEARS: "Ollók"
+ToolType.SHIELD: "Páncélok"
+ToolType.SHOVEL: "Ásók"
+ToolType.SWORD: "Kardok"
+ToolType.TRIDENT: "Szigonyok"
+
+Enchantment:
+  power: "Erő"
+  infinity: "Végtelen"
+  smite: "Sújtás"
+  efficiency: "Hatékonyság"
+  unbreaking: "Törhetetlenség"
+  frost_walker: "Fagyjárás"
+  impaling: "Döfés"
+  knockback: "Hátralökés"
+  fortune: "Szerencse"
+  looting: "Zsákmányolás"
+  loyalty: "Hűség"
+  luck_of_the_sea: "Horgászszerencse"
+  lure: "Csalétek"
+  mending: "Önjavítás"
+  respiration: "Vízallati légzés"
+  protection: "Védelem"
+  blast_protection: "Robbanás védelem"
+  feather_falling: "Könnyű esés"
+  fire_protection: "Tűzállóság"
+  projectile_protection: "Lövedékvédelem"
+  quick_charge: "Gyorstöltés"
+  riptide: "Dagály"
+  silk_touch: "Gyengéd Érintés"
+  sweeping: "Suhintás"
+  thorns: "Tüskék"
+  vanishing_curse: "Eltűnés átka"
+  aqua_affinity: "Vízalatti Légzés"
+  soul_speed: "Lelki gyorsaság"
+
+Updater.Unable: "Nem sikerült frissítéseket keresni!"
+Updater.UpdateAvailable: "Van egy elérhető frissítés a spigotmc.org-on!"
+Updater.YourVersion: "Jelenlegi Verzió: %ver"
+Updater.OnlineVersion: "Online Verzió: %ver"
+Updater.UpToDate: "Neked a legújabb MineTinker verzió van feltelepítve!"
